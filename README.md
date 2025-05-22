@@ -1,16 +1,17 @@
-# whatsweather
+# 🌦️ WhatsWeather - Flutter Weather App
 
-A new Flutter project.
+A minimal, beautiful weather app with real-time forecasts and animated weather conditions.
 
-## Getting Started
 
-This project is a starting point for a Flutter application.
+## ✨ Features
+- Real-time weather data from OpenWeatherMap API
+- Dynamic Lottie animations for different weather conditions
+- Clean Material 3 design with dark theme
+- Temperature in Celsius
+- Location-based weather
 
-A few resources to get you started if this is your first Flutter project:
+## 🚀 Getting Started
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+### Prerequisites
+- Flutter SDK (version 3.0 or newer)
+- OpenWeatherMap API key ([Get it free](https://openweathermap.org/api))
