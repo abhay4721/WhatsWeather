@@ -50,6 +50,7 @@ app.*.map.json
 *.jks
 *.env
 .env
+.env.*
 
 # Build files
 /build/
