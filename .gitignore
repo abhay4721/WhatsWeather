@@ -49,6 +49,7 @@ app.*.map.json
 *.keystore
 *.jks
 *.env
+.env
 
 # Build files
 /build/
