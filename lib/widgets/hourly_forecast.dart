@@ -21,26 +21,19 @@ class HourlyForecast extends StatelessWidget {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: upcoming.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 10), // More space
+        separatorBuilder: (_, __) => const SizedBox(width: 10),
         itemBuilder: (context, i) {
           final hourData = upcoming[i];
           final hourDateTime = DateTime.parse(hourData.time);
           final hourValue = hourDateTime.hour;
           final displayHour = '${hourDateTime.hour}:00';
 
-          return _PrettyCard(
-            gradient: LinearGradient(
-              colors: [
-                scheme.primaryContainer.withOpacity(0.78),
-                scheme.secondaryContainer.withOpacity(0.5),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+          return _SimpleCard(
             borderRadius: 18,
+            color: scheme.surfaceVariant, // <-- No gradient, just theme card color
             child: Container(
-              width: 78, // Wider card
-              padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 8), // More space inside
+              width: 78,
+              padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 8),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -54,13 +47,13 @@ class HourlyForecast extends StatelessWidget {
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
-                        color: scheme.onPrimaryContainer.withOpacity(0.9),
+                        color: scheme.onSurface,
                       )),
                   const SizedBox(height: 4),
                   Text(displayHour,
                       style: TextStyle(
                         fontSize: 13,
-                        color: scheme.onPrimaryContainer.withOpacity(0.55),
+                        color: scheme.onSurface.withOpacity(0.6),
                         fontWeight: FontWeight.w500,
                       )),
                 ],
@@ -73,14 +66,14 @@ class HourlyForecast extends StatelessWidget {
   }
 }
 
-class _PrettyCard extends StatelessWidget {
+class _SimpleCard extends StatelessWidget {
   final Widget child;
-  final Gradient? gradient;
   final double borderRadius;
+  final Color color;
 
-  const _PrettyCard({
+  const _SimpleCard({
     required this.child,
-    this.gradient,
+    required this.color,
     this.borderRadius = 16,
     super.key,
   });
@@ -89,15 +82,7 @@ class _PrettyCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        gradient: gradient ??
-            LinearGradient(
-              colors: [
-                Colors.white.withOpacity(0.12),
-                Colors.white.withOpacity(0.08),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+        color: color,
         borderRadius: BorderRadius.circular(borderRadius),
         boxShadow: [
           BoxShadow(
@@ -107,8 +92,8 @@ class _PrettyCard extends StatelessWidget {
           ),
         ],
         border: Border.all(
-          color: Colors.white.withOpacity(0.13),
-          width: 0.8,
+          color: Colors.white.withOpacity(0.09),
+          width: 0.7,
         ),
       ),
       child: child,
