@@ -18,62 +18,65 @@ class WeatherSearchBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-      child: Material(
-        elevation: 5,
-        borderRadius: BorderRadius.circular(32),
-        color: scheme.surface,
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(32),
-            border: Border.all(
-              color: scheme.primary.withOpacity(0.18),
-              width: 1.3,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          // Expanded search field as pill
+          Expanded(
+            child: TextField(
+              controller: controller,
+              onSubmitted: (_) => onSearch(),
+              textInputAction: TextInputAction.search,
+              style: TextStyle(
+                color: scheme.onSurface,
+                fontSize: 18,
+              ),
+              decoration: InputDecoration(
+                prefixIcon: Icon(Icons.search, color: scheme.primary),
+                hintText: "Search city...",
+                hintStyle: TextStyle(
+                  color: scheme.onSurface.withOpacity(0.54),
+                ),
+                filled: true,
+                fillColor: scheme.surfaceVariant.withOpacity(0.8),
+                contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 0),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(28),
+                  borderSide: BorderSide(
+                    color: scheme.primary.withOpacity(0.17),
+                    width: 1.1,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(28),
+                  borderSide: BorderSide(
+                    color: scheme.primary.withOpacity(0.42),
+                    width: 1.5,
+                  ),
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(28),
+                ),
+              ),
             ),
           ),
-          child: Row(
-            children: [
-              const SizedBox(width: 16),
-              Icon(Icons.search, color: scheme.primary.withOpacity(0.8)),
-              const SizedBox(width: 6),
-              Expanded(
-                child: TextField(
-                  controller: controller,
-                  onSubmitted: (_) => onSearch(),
-                  textInputAction: TextInputAction.search,
-                  style: TextStyle(
-                    color: scheme.onSurface,
-                    fontSize: 18,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: "Search city...",
-                    hintStyle: TextStyle(
-                      color: scheme.onSurface.withOpacity(0.5),
-                    ),
-                    border: InputBorder.none,
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                ),
-              ),
-              IconButton(
-                icon: Icon(
-                  isFavorite ? Icons.star : Icons.star_border,
-                  color: isFavorite ? Colors.amber : scheme.primary.withOpacity(0.7),
-                ),
-                tooltip: isFavorite ? "Remove Favorite" : "Add Favorite",
-                onPressed: onFavorite,
-              ),
-              const SizedBox(width: 6),
-              IconButton(
-                icon: Icon(Icons.arrow_forward_ios_rounded, color: scheme.primary),
-                tooltip: "Search",
-                onPressed: onSearch,
-              ),
-              const SizedBox(width: 6),
-            ],
+          const SizedBox(width: 10),
+          // Star favorite
+          IconButton(
+            icon: Icon(
+              isFavorite ? Icons.star : Icons.star_border,
+              color: isFavorite ? Colors.amber : scheme.primary.withOpacity(0.8),
+            ),
+            tooltip: isFavorite ? "Remove Favorite" : "Add Favorite",
+            onPressed: onFavorite,
           ),
-        ),
+          // Search arrow
+          IconButton(
+            icon: Icon(Icons.arrow_forward_ios_rounded, color: scheme.primary),
+            tooltip: "Search",
+            onPressed: onSearch,
+          ),
+        ],
       ),
     );
   }

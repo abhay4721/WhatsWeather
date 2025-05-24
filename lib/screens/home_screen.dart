@@ -1,3 +1,4 @@
+// Add this at the top, if not present already
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/weather_model.dart';
@@ -6,7 +7,7 @@ import '../services/geocoding_service.dart';
 import '../services/favorites_service.dart';
 import '../widgets/weekly_forecast.dart';
 import '../widgets/hourly_forecast.dart';
-import '../widgets/weather_search_bar.dart'; // <<-- Add this import
+import '../widgets/weather_search_bar.dart';
 import '../utils/weather_icon.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -108,6 +109,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: scheme.primaryContainer,
@@ -131,131 +133,155 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : weather == null
-              ? const Center(child: Text('Failed to load weather data.'))
-              : RefreshIndicator(
-                  onRefresh: () async => await fetchForCity(_city),
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // MODERN SEARCH BAR
-                        WeatherSearchBar(
-                          controller: _searchController,
-                          onSearch: _searchCity,
-                          onFavorite: _toggleFavorite,
-                          isFavorite: _isFavorite,
-                        ),
-                        const SizedBox(height: 8),
-
-                        // Floating weather card
-                        Center(
-                          child: Card(
-                            elevation: 10,
-                            color: scheme.primaryContainer.withOpacity(0.85),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 34, vertical: 38),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    getWeatherIcon(weather!.current.weathercode, hour: DateTime.now().hour),
-                                    size: 78,
-                                    color: scheme.primary,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    '${weather!.current.temperature.toStringAsFixed(1)}°C',
-                                    style: TextStyle(
-                                      fontSize: 48,
-                                      fontWeight: FontWeight.bold,
-                                      color: scheme.onPrimaryContainer,
-                                      letterSpacing: -2,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    _weatherDescription(weather!.current.weathercode),
-                                    style: TextStyle(
-                                      color: scheme.onPrimaryContainer.withOpacity(0.8),
-                                      fontSize: 19,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(Icons.air, color: scheme.secondary, size: 20),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        'Wind: ${weather!.current.windspeed.toStringAsFixed(1)} km/h',
-                                        style: TextStyle(
-                                          color: scheme.onPrimaryContainer.withOpacity(0.8),
-                                        ),
-                                      ),
-                                    ],
+      body: Container(
+        // Subtle vertical gradient background
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              scheme.primaryContainer.withOpacity(0.15),
+              scheme.surface.withOpacity(0.97),
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : weather == null
+                ? const Center(child: Text('Failed to load weather data.'))
+                : RefreshIndicator(
+                    onRefresh: () async => await fetchForCity(_city),
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // --- Slimmer, modern search bar ---
+                          WeatherSearchBar(
+                            controller: _searchController,
+                            onSearch: _searchCity,
+                            onFavorite: _toggleFavorite,
+                            isFavorite: _isFavorite,
+                            //slim: true, / Pass this if you add it to the widget
+                          ),
+                          const SizedBox(height: 10),
+                          // --- Main weather card with inner shadow border ---
+                          Center(
+                            child: Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: scheme.primaryContainer.withOpacity(0.83),
+                                borderRadius: BorderRadius.circular(36),
+                                border: Border.all(
+                                  color: scheme.primary.withOpacity(0.13),
+                                  width: 1.2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.11),
+                                    blurRadius: 20,
+                                    offset: Offset(0, 8),
                                   ),
                                 ],
                               ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-
-                        // Today and hourly
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 8, 20, 6),
-                          child: Row(
-                            children: [
-                              Text(
-                                "Today",
-                                style: TextStyle(
-                                  color: scheme.onBackground,
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w700,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 36),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      getWeatherIcon(weather!.current.weathercode, hour: DateTime.now().hour),
+                                      size: 72,
+                                      color: scheme.primary,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      '${weather!.current.temperature.toStringAsFixed(1)}°C',
+                                      style: TextStyle(
+                                        fontSize: 44,
+                                        fontWeight: FontWeight.bold,
+                                        color: scheme.onPrimaryContainer,
+                                        letterSpacing: -2,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      _weatherDescription(weather!.current.weathercode),
+                                      style: TextStyle(
+                                        color: scheme.onPrimaryContainer.withOpacity(0.8),
+                                        fontSize: 18,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.air, color: scheme.secondary, size: 20),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          'Wind: ${weather!.current.windspeed.toStringAsFixed(1)} km/h',
+                                          style: TextStyle(
+                                            color: scheme.onPrimaryContainer.withOpacity(0.8),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
                               ),
-                              const SizedBox(width: 8),
-                              Text(
-                                DateFormat('EEEE, MMM d').format(DateTime.now()),
-                                style: TextStyle(
-                                  color: scheme.onBackground.withOpacity(0.7),
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        HourlyForecast(hourly: weather!.hourly),
-
-                        const SizedBox(height: 10),
-
-                        // Weekly
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
-                          child: Text(
-                            "7-Day Forecast",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 22,
-                              color: scheme.onBackground,
                             ),
                           ),
-                        ),
-                        WeeklyForecast(daily: weather!.daily),
-                        const SizedBox(height: 26),
-                      ],
+                          const SizedBox(height: 8),
+
+                          // --- "Today" headline with more padding/boldness ---
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(20, 14, 20, 6),
+                            child: Row(
+                              children: [
+                                Text(
+                                  "Today",
+                                  style: TextStyle(
+                                    color: scheme.onBackground,
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  DateFormat('EEEE, MMM d').format(DateTime.now()),
+                                  style: TextStyle(
+                                    color: scheme.onBackground.withOpacity(0.7),
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          HourlyForecast(hourly: weather!.hourly),
+                          const SizedBox(height: 14),
+
+                          // --- Weekly section (only show one headline!) ---
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(20, 18, 20, 4),
+                            child: Text(
+                              "7-Day Forecast",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 22,
+                                color: scheme.onBackground,
+                              ),
+                            ),
+                          ),
+                          WeeklyForecast(daily: weather!.daily),
+                          const SizedBox(height: 30),
+                        ],
+                      ),
                     ),
                   ),
-                ),
+      ),
     );
   }
 
-  // Weather code to description (simplified for demo)
   String _weatherDescription(int code) {
     switch (code) {
       case 0:
