@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:lottie/lottie.dart';
 import '../models/weather_model.dart';
 import '../services/weather_service.dart';
 import '../services/geocoding_service.dart';
@@ -8,6 +9,7 @@ import '../widgets/weekly_forecast.dart';
 import '../widgets/hourly_forecast.dart';
 import '../widgets/weather_search_bar.dart';
 import '../utils/weather_icon.dart';
+import '../utils/lottie_weather.dart';
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback? onThemeToggle;
@@ -203,7 +205,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Main weather card
+                      // Main weather card with Lottie icon
                       Center(
                         child: Container(
                           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -227,10 +229,13 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(
-                                  getWeatherIcon(weather!.current.weathercode, hour: DateTime.now().hour),
-                                  size: 72,
-                                  color: scheme.primary,
+                                // Lottie animated weather icon!
+                                Lottie.asset(
+                                  lottieForWeather(weather!.current.weathercode),
+                                  width: 96,
+                                  height: 96,
+                                  repeat: true,
+                                  fit: BoxFit.contain,
                                 ),
                                 const SizedBox(height: 16),
                                 Text(
