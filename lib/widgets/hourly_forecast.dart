@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/weather_model.dart';
+import '../utils/weather_icon.dart';
 
 class HourlyForecast extends StatelessWidget {
   final List<HourlyWeather> hourly;
@@ -22,8 +23,9 @@ class HourlyForecast extends StatelessWidget {
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, i) {
           final hourData = upcoming[i];
-          final hour = DateTime.parse(hourData.time);
-          final displayHour = '${hour.hour}:00';
+          final hourDateTime = DateTime.parse(hourData.time);
+          final hourValue = hourDateTime.hour;
+          final displayHour = '${hourDateTime.hour}:00';
 
           return Card(
             elevation: 2,
@@ -34,7 +36,10 @@ class HourlyForecast extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.wb_sunny), // TODO: Dynamic icon by weathercode
+                  Icon(
+                    getWeatherIcon(hourData.weathercode, hour: hourValue),
+                    color: getWeatherIconColor(hourData.weathercode),
+                  ),
                   const SizedBox(height: 8),
                   Text('${hourData.temperature.toStringAsFixed(0)}°', style: const TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 4),
