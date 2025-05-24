@@ -11,39 +11,31 @@ class WeeklyForecast extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Padding(
-          padding: EdgeInsets.fromLTRB(20, 16, 20, 8),
-          child: Text(
-            "7-Day Forecast",
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
-          ),
-        ),
-        ...daily.map((d) {
-          return Card(
-            color: scheme.surfaceVariant,
-            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: ListTile(
-              leading: Icon(
-                getWeatherIcon(d.weathercode, hour: 12), // noon = day icon
-                color: scheme.primary,
-                size: 32,
-              ),
-              title: Text(d.date,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: scheme.onSurfaceVariant,
-                  )),
-              subtitle: Text(
-                'Max: ${d.maxTemp}°C, Min: ${d.minTemp}°C',
-                style: TextStyle(color: scheme.onSurfaceVariant.withOpacity(0.8)),
+      children: daily.map((d) {
+        return Card(
+          color: scheme.surfaceVariant,
+          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: ListTile(
+            leading: Icon(
+              getWeatherIcon(d.weathercode, hour: 12), // noon = day icon
+              color: scheme.primary,
+              size: 32,
+            ),
+            title: Text(
+              d.date,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: scheme.onSurfaceVariant,
               ),
             ),
-          );
-        }),
-      ],
+            subtitle: Text(
+              'Max: ${d.maxTemp}°C, Min: ${d.minTemp}°C',
+              style: TextStyle(color: scheme.onSurfaceVariant.withOpacity(0.8)),
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 }
