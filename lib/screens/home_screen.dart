@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
+import 'package:intl/intl.dart';
 import '../models/weather_model.dart';
 import '../services/weather_service.dart';
 import '../services/geocoding_service.dart';
 import '../services/favorites_service.dart';
 import '../widgets/weekly_forecast.dart';
-import '../widgets/weather_card.dart';
 import '../widgets/hourly_forecast.dart';
-import '../config.dart';
+import '../widgets/weather_search_bar.dart'; // <<-- Add this import
+import '../utils/weather_icon.dart';
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback? onThemeToggle;
@@ -48,7 +48,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void didUpdateWidget(covariant HomeScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // If initialCity changes, load that city
     if (widget.initialCity != oldWidget.initialCity && widget.initialCity != _city) {
       _city = widget.initialCity;
       _searchController.text = _city;
@@ -61,18 +60,6 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() => _favorites = favs);
   }
 
-  Future<void> fetch({double? latitude, double? longitude}) async {
-    setState(() => isLoading = true);
-    final data = await WeatherService.fetchWeather(
-      latitude: latitude ?? defaultLatitude,
-      longitude: longitude ?? defaultLongitude,
-    );
-    setState(() {
-      weather = data;
-      isLoading = false;
-    });
-  }
-
   Future<void> fetchForCity(String city) async {
     setState(() => isLoading = true);
     final result = await GeocodingService.getLocation(city);
@@ -82,7 +69,11 @@ class _HomeScreenState extends State<HomeScreen> {
         _searchController.text = result.name;
       });
       widget.onCityChanged?.call(result.name);
-      await fetch(latitude: result.latitude, longitude: result.longitude);
+      final data = await WeatherService.fetchWeather(latitude: result.latitude, longitude: result.longitude);
+      setState(() {
+        weather = data;
+        isLoading = false;
+      });
     } else {
       setState(() {
         weather = null;
@@ -99,49 +90,8 @@ class _HomeScreenState extends State<HomeScreen> {
     await fetchForCity(_searchController.text);
   }
 
-  Future<void> _fetchMyLocationWeather() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Location services are disabled.')),
-      );
-      return;
-    }
-
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Location permissions are denied')),
-        );
-        return;
-      }
-    }
-    if (permission == LocationPermission.deniedForever) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Location permissions are permanently denied')),
-      );
-      return;
-    }
-
-    Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high);
-
-    setState(() {
-      _city = "My Location";
-      _searchController.text = "My Location";
-    });
-    widget.onCityChanged?.call("My Location");
-    await fetch(latitude: position.latitude, longitude: position.longitude);
-  }
-
-  // Favorite toggle logic
   void _toggleFavorite() async {
-    if (_city == "My Location") return; // Don't favorite current GPS
+    if (_city == "My Location") return; // Don't favorite GPS
     setState(() {
       if (_favorites.contains(_city)) {
         _favorites.remove(_city);
@@ -157,12 +107,25 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
-        title: Text('WhatsWeather - $_city'),
+        backgroundColor: scheme.primaryContainer,
+        elevation: 0,
+        title: Text(
+          'WhatsWeather - $_city',
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            color: scheme.onPrimaryContainer,
+            fontSize: 20,
+          ),
+        ),
         actions: [
           IconButton(
-            icon: Icon(widget.darkMode ? Icons.dark_mode : Icons.light_mode),
+            icon: Icon(
+              widget.darkMode ? Icons.dark_mode : Icons.light_mode,
+              color: scheme.onPrimaryContainer,
+            ),
             tooltip: 'Toggle Theme',
             onPressed: widget.onThemeToggle,
           ),
@@ -173,57 +136,163 @@ class _HomeScreenState extends State<HomeScreen> {
           : weather == null
               ? const Center(child: Text('Failed to load weather data.'))
               : RefreshIndicator(
-                  onRefresh: () async {
-                    await fetchForCity(_city);
-                  },
+                  onRefresh: () async => await fetchForCity(_city),
                   child: SingleChildScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        // MODERN SEARCH BAR
+                        WeatherSearchBar(
+                          controller: _searchController,
+                          onSearch: _searchCity,
+                          onFavorite: _toggleFavorite,
+                          isFavorite: _isFavorite,
+                        ),
+                        const SizedBox(height: 8),
+
+                        // Floating weather card
+                        Center(
+                          child: Card(
+                            elevation: 10,
+                            color: scheme.primaryContainer.withOpacity(0.85),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 34, vertical: 38),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    getWeatherIcon(weather!.current.weathercode, hour: DateTime.now().hour),
+                                    size: 78,
+                                    color: scheme.primary,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    '${weather!.current.temperature.toStringAsFixed(1)}°C',
+                                    style: TextStyle(
+                                      fontSize: 48,
+                                      fontWeight: FontWeight.bold,
+                                      color: scheme.onPrimaryContainer,
+                                      letterSpacing: -2,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    _weatherDescription(weather!.current.weathercode),
+                                    style: TextStyle(
+                                      color: scheme.onPrimaryContainer.withOpacity(0.8),
+                                      fontSize: 19,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.air, color: scheme.secondary, size: 20),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Wind: ${weather!.current.windspeed.toStringAsFixed(1)} km/h',
+                                        style: TextStyle(
+                                          color: scheme.onPrimaryContainer.withOpacity(0.8),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+
+                        // Today and hourly
                         Padding(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.fromLTRB(20, 8, 20, 6),
                           child: Row(
                             children: [
-                              Expanded(
-                                child: TextField(
-                                  controller: _searchController,
-                                  decoration: const InputDecoration(
-                                    hintText: "Enter city name",
-                                    border: OutlineInputBorder(),
-                                    contentPadding: EdgeInsets.symmetric(horizontal: 8),
-                                  ),
-                                  onSubmitted: (v) => _searchCity(),
+                              Text(
+                                "Today",
+                                style: TextStyle(
+                                  color: scheme.onBackground,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
-                              IconButton(
-                                icon: Icon(
-                                  _isFavorite ? Icons.star : Icons.star_border,
-                                  color: _isFavorite ? Colors.amber : null,
+                              const SizedBox(width: 8),
+                              Text(
+                                DateFormat('EEEE, MMM d').format(DateTime.now()),
+                                style: TextStyle(
+                                  color: scheme.onBackground.withOpacity(0.7),
+                                  fontSize: 16,
                                 ),
-                                tooltip: _isFavorite ? "Remove Favorite" : "Add Favorite",
-                                onPressed: _toggleFavorite,
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.search),
-                                onPressed: _searchCity,
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.my_location),
-                                onPressed: _fetchMyLocationWeather,
                               ),
                             ],
                           ),
                         ),
-                        WeatherCard(current: weather!.current),
-                        const SizedBox(height: 8),
                         HourlyForecast(hourly: weather!.hourly),
-                        const SizedBox(height: 8),
+
+                        const SizedBox(height: 10),
+
+                        // Weekly
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+                          child: Text(
+                            "7-Day Forecast",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 22,
+                              color: scheme.onBackground,
+                            ),
+                          ),
+                        ),
                         WeeklyForecast(daily: weather!.daily),
+                        const SizedBox(height: 26),
                       ],
                     ),
                   ),
                 ),
     );
+  }
+
+  // Weather code to description (simplified for demo)
+  String _weatherDescription(int code) {
+    switch (code) {
+      case 0:
+        return "Clear Sky";
+      case 1:
+        return "Mainly Clear";
+      case 2:
+        return "Partly Cloudy";
+      case 3:
+        return "Overcast";
+      case 45:
+      case 48:
+        return "Fog";
+      case 51:
+      case 53:
+      case 55:
+        return "Drizzle";
+      case 61:
+      case 63:
+      case 65:
+      case 80:
+      case 81:
+      case 82:
+        return "Rain Showers";
+      case 71:
+      case 73:
+      case 75:
+      case 77:
+      case 85:
+      case 86:
+        return "Snow";
+      case 95:
+      case 96:
+      case 99:
+        return "Thunderstorm";
+      default:
+        return "Condition Code: $code";
+    }
   }
 }
