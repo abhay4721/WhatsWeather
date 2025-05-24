@@ -3,6 +3,7 @@ import 'package:geolocator/geolocator.dart';
 import '../models/weather_model.dart';
 import '../services/weather_service.dart';
 import '../services/geocoding_service.dart';
+import '../services/favorites_service.dart';
 import '../widgets/weekly_forecast.dart';
 import '../widgets/weather_card.dart';
 import '../widgets/hourly_forecast.dart';
@@ -11,22 +12,53 @@ import '../config.dart';
 class HomeScreen extends StatefulWidget {
   final VoidCallback? onThemeToggle;
   final bool darkMode;
-  const HomeScreen({super.key, this.onThemeToggle, this.darkMode = false});
+  final String initialCity;
+  final VoidCallback? onFavoritesChanged;
+  final ValueChanged<String>? onCityChanged;
+
+  const HomeScreen({
+    super.key,
+    this.onThemeToggle,
+    this.darkMode = false,
+    this.initialCity = "Delhi",
+    this.onFavoritesChanged,
+    this.onCityChanged,
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  WeatherResponseWithAlerts? weather;
+  WeatherResponse? weather;
   bool isLoading = true;
-  String _city = "Delhi";
+  late String _city;
   TextEditingController _searchController = TextEditingController();
+  List<String> _favorites = [];
 
   @override
   void initState() {
     super.initState();
-    fetch(); // Default fetch for Delhi
+    _city = widget.initialCity;
+    _searchController.text = _city;
+    _initFavorites();
+    fetchForCity(_city);
+  }
+
+  @override
+  void didUpdateWidget(covariant HomeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // If initialCity changes, load that city
+    if (widget.initialCity != oldWidget.initialCity && widget.initialCity != _city) {
+      _city = widget.initialCity;
+      _searchController.text = _city;
+      fetchForCity(_city);
+    }
+  }
+
+  Future<void> _initFavorites() async {
+    final favs = await FavoritesService.loadFavorites();
+    setState(() => _favorites = favs);
   }
 
   Future<void> fetch({double? latitude, double? longitude}) async {
@@ -41,19 +73,30 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  Future<void> _searchCity() async {
-    if (_searchController.text.isEmpty) return;
-    final result = await GeocodingService.getLocation(_searchController.text);
+  Future<void> fetchForCity(String city) async {
+    setState(() => isLoading = true);
+    final result = await GeocodingService.getLocation(city);
     if (result != null) {
       setState(() {
         _city = result.name;
+        _searchController.text = result.name;
       });
-      fetch(latitude: result.latitude, longitude: result.longitude);
+      widget.onCityChanged?.call(result.name);
+      await fetch(latitude: result.latitude, longitude: result.longitude);
     } else {
+      setState(() {
+        weather = null;
+        isLoading = false;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('City not found')),
       );
     }
+  }
+
+  Future<void> _searchCity() async {
+    if (_searchController.text.isEmpty) return;
+    await fetchForCity(_searchController.text);
   }
 
   Future<void> _fetchMyLocationWeather() async {
@@ -90,9 +133,27 @@ class _HomeScreenState extends State<HomeScreen> {
 
     setState(() {
       _city = "My Location";
+      _searchController.text = "My Location";
     });
-    fetch(latitude: position.latitude, longitude: position.longitude);
+    widget.onCityChanged?.call("My Location");
+    await fetch(latitude: position.latitude, longitude: position.longitude);
   }
+
+  // Favorite toggle logic
+  void _toggleFavorite() async {
+    if (_city == "My Location") return; // Don't favorite current GPS
+    setState(() {
+      if (_favorites.contains(_city)) {
+        _favorites.remove(_city);
+      } else {
+        _favorites.add(_city);
+      }
+    });
+    await FavoritesService.saveFavorites(_favorites);
+    if (widget.onFavoritesChanged != null) widget.onFavoritesChanged!();
+  }
+
+  bool get _isFavorite => _favorites.contains(_city);
 
   @override
   Widget build(BuildContext context) {
@@ -113,7 +174,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ? const Center(child: Text('Failed to load weather data.'))
               : RefreshIndicator(
                   onRefresh: () async {
-                    await fetch();
+                    await fetchForCity(_city);
                   },
                   child: SingleChildScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
@@ -136,6 +197,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                               ),
                               IconButton(
+                                icon: Icon(
+                                  _isFavorite ? Icons.star : Icons.star_border,
+                                  color: _isFavorite ? Colors.amber : null,
+                                ),
+                                tooltip: _isFavorite ? "Remove Favorite" : "Add Favorite",
+                                onPressed: _toggleFavorite,
+                              ),
+                              IconButton(
                                 icon: const Icon(Icons.search),
                                 onPressed: _searchCity,
                               ),
@@ -146,23 +215,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             ],
                           ),
                         ),
-                        // WEATHER ALERT BANNER
-                        if (weather!.alerts.isNotEmpty)
-                          ...weather!.alerts.map((alert) => Card(
-                            color: Colors.red[300],
-                            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            child: ListTile(
-                              leading: const Icon(Icons.warning, color: Colors.white),
-                              title: Text(
-                                alert.event,
-                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                              ),
-                              subtitle: Text(
-                                alert.description,
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                            ),
-                          )),
                         WeatherCard(current: weather!.current),
                         const SizedBox(height: 8),
                         HourlyForecast(hourly: weather!.hourly),
