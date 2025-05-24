@@ -4,11 +4,18 @@ A minimal, beautiful weather app with real-time forecasts and animated weather c
 
 
 ## ✨ Features
-- Real-time weather data from OpenWeatherMap API
-- Dynamic Lottie animations for different weather conditions
-- Clean Material 3 design with dark theme
+- Real-time weather data
 - Temperature in Celsius
-- Location-based weather
+- Dark Mode: Switch between light and dark themes with a single tap.
+- Pull-to-Refresh: Swipe down anywhere to refresh weather data instantly.
+- Weather Alerts: Get notified of severe weather conditions (when available).
+- City Search: Find weather info for any city worldwide.
+- GPS Support: Tap the location icon to instantly get your local weather.
+- Favorites: Save your favorite cities for quick access and switch with one tap.
+- Persistent Favorites: Your saved cities are remembered even after you close the app.
+- Bottom Navigation: Quickly switch between weather and your favorite cities.
+
+
 
 ## 🚀 Getting Started
 
