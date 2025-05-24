@@ -9,7 +9,9 @@ import '../widgets/hourly_forecast.dart';
 import '../config.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final VoidCallback? onThemeToggle;
+  final bool darkMode;
+  const HomeScreen({super.key, this.onThemeToggle, this.darkMode = false});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -97,48 +99,60 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('WhatsWeather - $_city'),
+        actions: [
+          IconButton(
+            icon: Icon(widget.darkMode ? Icons.dark_mode : Icons.light_mode),
+            tooltip: 'Toggle Theme',
+            onPressed: widget.onThemeToggle,
+          ),
+        ],
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : weather == null
               ? const Center(child: Text('Failed to load weather data.'))
-              : SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Search Bar
-                      Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                controller: _searchController,
-                                decoration: const InputDecoration(
-                                  hintText: "Enter city name",
-                                  border: OutlineInputBorder(),
-                                  contentPadding: EdgeInsets.symmetric(horizontal: 8),
+              : RefreshIndicator(
+                  onRefresh: () async {
+                    await fetch();
+                  },
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  controller: _searchController,
+                                  decoration: const InputDecoration(
+                                    hintText: "Enter city name",
+                                    border: OutlineInputBorder(),
+                                    contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                                  ),
+                                  onSubmitted: (v) => _searchCity(),
                                 ),
-                                onSubmitted: (v) => _searchCity(),
                               ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.search),
-                              onPressed: _searchCity,
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.my_location),
-                              onPressed: _fetchMyLocationWeather,
-                            ),
-                          ],
+                              IconButton(
+                                icon: const Icon(Icons.search),
+                                onPressed: _searchCity,
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.my_location),
+                                onPressed: _fetchMyLocationWeather,
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      WeatherCard(current: weather!.current),
-                      const SizedBox(height: 8),
-                      HourlyForecast(hourly: weather!.hourly),
-                      const SizedBox(height: 8),
-                      WeeklyForecast(daily: weather!.daily),
-                    ],
+                        WeatherCard(current: weather!.current),
+                        const SizedBox(height: 8),
+                        HourlyForecast(hourly: weather!.hourly),
+                        const SizedBox(height: 8),
+                        WeeklyForecast(daily: weather!.daily),
+                      ],
+                    ),
                   ),
                 ),
     );
