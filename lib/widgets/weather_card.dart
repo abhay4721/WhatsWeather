@@ -9,28 +9,56 @@ class WeatherCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Get current hour
+    final scheme = Theme.of(context).colorScheme;
     final now = DateTime.now();
+
     return Card(
-      margin: const EdgeInsets.all(16),
-      elevation: 2,
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      color: scheme.primaryContainer,
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 32),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Icon(
               getWeatherIcon(current.weathercode, hour: now.hour),
-              size: 56,
-              color: getWeatherIconColor(current.weathercode),
+              size: 64,
+              color: scheme.primary,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             Text(
               '${current.temperature}°C',
-              style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 48,
+                fontWeight: FontWeight.bold,
+                color: scheme.onPrimaryContainer,
+                letterSpacing: -2,
+              ),
             ),
             const SizedBox(height: 8),
-            Text('Wind: ${current.windspeed} km/h'),
+            Text(
+              current.weathercode == 0 ? "Clear Sky" : "Condition Code: ${current.weathercode}",
+              style: TextStyle(
+                color: scheme.onPrimaryContainer.withOpacity(0.8),
+                fontSize: 18,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.air, color: scheme.secondary, size: 20),
+                const SizedBox(width: 4),
+                Text(
+                  'Wind: ${current.windspeed} km/h',
+                  style: TextStyle(
+                    color: scheme.onPrimaryContainer.withOpacity(0.8),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),

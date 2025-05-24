@@ -10,13 +10,14 @@ class HourlyForecast extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
+    final scheme = Theme.of(context).colorScheme;
     final upcoming = hourly.where((h) {
       final time = DateTime.tryParse(h.time);
       return time != null && time.isAfter(now);
     }).take(12).toList();
 
     return SizedBox(
-      height: 120,
+      height: 140,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: upcoming.length,
@@ -29,21 +30,34 @@ class HourlyForecast extends StatelessWidget {
 
           return Card(
             elevation: 2,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            color: scheme.secondaryContainer,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+            ),
             child: Container(
-              width: 70,
-              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+              width: 78,
+              padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 8),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
                     getWeatherIcon(hourData.weathercode, hour: hourValue),
-                    color: getWeatherIconColor(hourData.weathercode),
+                    size: 28,
+                    color: scheme.primary,
                   ),
-                  const SizedBox(height: 8),
-                  Text('${hourData.temperature.toStringAsFixed(0)}°', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 10),
+                  Text('${hourData.temperature.toStringAsFixed(0)}°',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        color: scheme.onSecondaryContainer,
+                      )),
                   const SizedBox(height: 4),
-                  Text(displayHour, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                  Text(displayHour,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: scheme.onSecondaryContainer.withOpacity(0.7),
+                      )),
                 ],
               ),
             ),
