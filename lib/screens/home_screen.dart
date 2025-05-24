@@ -18,7 +18,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  WeatherResponse? weather;
+  WeatherResponseWithAlerts? weather;
   bool isLoading = true;
   String _city = "Delhi";
   TextEditingController _searchController = TextEditingController();
@@ -146,6 +146,23 @@ class _HomeScreenState extends State<HomeScreen> {
                             ],
                           ),
                         ),
+                        // WEATHER ALERT BANNER
+                        if (weather!.alerts.isNotEmpty)
+                          ...weather!.alerts.map((alert) => Card(
+                            color: Colors.red[300],
+                            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            child: ListTile(
+                              leading: const Icon(Icons.warning, color: Colors.white),
+                              title: Text(
+                                alert.event,
+                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                              ),
+                              subtitle: Text(
+                                alert.description,
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          )),
                         WeatherCard(current: weather!.current),
                         const SizedBox(height: 8),
                         HourlyForecast(hourly: weather!.hourly),
