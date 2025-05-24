@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/home_screen.dart';
 import 'screens/favorites_screen.dart';
 
@@ -16,20 +17,41 @@ class _WhatsWeatherAppState extends State<WhatsWeatherApp> {
   bool _darkMode = false;
   int _selectedIndex = 0;
   String _currentCity = "Delhi";
-  int _refreshFavorites = 0; // Used to force refresh of FavoritesScreen
+  int _refreshFavorites = 0;
 
-  void _toggleTheme() => setState(() => _darkMode = !_darkMode);
+  @override
+  void initState() {
+    super.initState();
+    _loadTheme();
+  }
 
-  void _onNavTap(int idx) => setState(() => _selectedIndex = idx);
-
-  // Called when a favorite is added/removed, to refresh the screen
-  void _onFavoritesChanged() {
+  // Load theme from SharedPreferences
+  Future<void> _loadTheme() async {
+    final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _refreshFavorites++; // just triggers rebuild of FavoritesScreen
+      _darkMode = prefs.getBool('darkMode') ?? false;
     });
   }
 
-  // Called when a favorite city is selected
+  // Save theme setting
+  Future<void> _saveTheme(bool dark) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('darkMode', dark);
+  }
+
+  void _toggleTheme() {
+    setState(() => _darkMode = !_darkMode);
+    _saveTheme(!_darkMode ? false : true); // Save after change
+  }
+
+  void _onNavTap(int idx) => setState(() => _selectedIndex = idx);
+
+  void _onFavoritesChanged() {
+    setState(() {
+      _refreshFavorites++;
+    });
+  }
+
   void _onSelectFavorite(String city) {
     setState(() {
       _currentCity = city;
@@ -37,7 +59,6 @@ class _WhatsWeatherAppState extends State<WhatsWeatherApp> {
     });
   }
 
-  // Called when city is changed from the HomeScreen (search/star/click)
   void _onCityChanged(String city) {
     setState(() {
       _currentCity = city;
