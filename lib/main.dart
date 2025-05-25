@@ -24,7 +24,7 @@ class _WhatsWeatherAppState extends State<WhatsWeatherApp> {
   String _currentCity = "Delhi";
   int _refreshFavorites = 0;
   bool _useFahrenheit = false;
-  int _homeScreenRefresh = 0; // <-- this forces HomeScreen to refresh
+  bool _isPrefsLoaded = false; // <-- Add this flag
 
   ColorScheme? _lightScheme;
   ColorScheme? _darkScheme;
@@ -41,15 +41,11 @@ class _WhatsWeatherAppState extends State<WhatsWeatherApp> {
       _darkMode = prefs.getBool('darkMode') ?? false;
       _currentCity = prefs.getString('defaultCity') ?? "Delhi";
       _useFahrenheit = prefs.getBool('useFahrenheit') ?? false;
+      _isPrefsLoaded = true; // <-- Only show app after loading
     });
   }
 
-  Future<void> _savePrefs() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('darkMode', _darkMode);
-    await prefs.setString('defaultCity', _currentCity);
-    await prefs.setBool('useFahrenheit', _useFahrenheit);
-  }
+  // ... (rest of your methods remain unchanged)
 
   void _onNavTap(int idx) => setState(() => _selectedIndex = idx);
 
@@ -59,7 +55,6 @@ class _WhatsWeatherAppState extends State<WhatsWeatherApp> {
     setState(() {
       _currentCity = city;
       _selectedIndex = 0;
-      _homeScreenRefresh++; // triggers HomeScreen reload
     });
     _savePrefs();
   }
@@ -67,9 +62,15 @@ class _WhatsWeatherAppState extends State<WhatsWeatherApp> {
   void _onCityChanged(String city) {
     setState(() {
       _currentCity = city;
-      _homeScreenRefresh++; // triggers HomeScreen reload
     });
     _savePrefs();
+  }
+
+  Future<void> _savePrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('darkMode', _darkMode);
+    await prefs.setString('defaultCity', _currentCity);
+    await prefs.setBool('useFahrenheit', _useFahrenheit);
   }
 
   void _openSettings(BuildContext context) async {
@@ -83,12 +84,12 @@ class _WhatsWeatherAppState extends State<WhatsWeatherApp> {
         ),
       ),
     );
+
     if (result != null && result is Map<String, dynamic>) {
       setState(() {
         _darkMode = result['darkMode'] ?? _darkMode;
         _useFahrenheit = result['useFahrenheit'] ?? _useFahrenheit;
         _currentCity = result['defaultCity'] ?? _currentCity;
-        _homeScreenRefresh++; // <-- force HomeScreen rebuild/refetch
       });
       _savePrefs();
     }
@@ -96,6 +97,20 @@ class _WhatsWeatherAppState extends State<WhatsWeatherApp> {
 
   @override
   Widget build(BuildContext context) {
+    // --- SHOW A SPLASH/LOADING SCREEN UNTIL PREFS LOADED ---
+    if (!_isPrefsLoaded) {
+      return MaterialApp(
+        home: Scaffold(
+          backgroundColor: Colors.black, // Or dark color if you want!
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        ),
+        debugShowCheckedModeBanner: false,
+      );
+    }
+
+    // --- REST OF YOUR APP ---
     return DynamicColorBuilder(
       builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
         _lightScheme = lightDynamic ?? ColorScheme.fromSeed(seedColor: Colors.blue);
@@ -113,40 +128,37 @@ class _WhatsWeatherAppState extends State<WhatsWeatherApp> {
           ),
           themeMode: _darkMode ? ThemeMode.dark : ThemeMode.light,
           debugShowCheckedModeBanner: false,
-          home: Builder(
-            builder: (context) => Scaffold(
-              body: IndexedStack(
-                index: _selectedIndex,
-                children: [
-                  HomeScreen(
-                    key: ValueKey(_homeScreenRefresh), // force reload after settings change
-                    initialCity: _currentCity,
-                    useFahrenheit: _useFahrenheit,
-                    darkMode: _darkMode,
-                    onFavoritesChanged: _onFavoritesChanged,
-                    onCityChanged: _onCityChanged,
-                    onSettingsPressed: () => _openSettings(context),
-                  ),
-                  FavoritesScreen(
-                    onSelectCity: _onSelectFavorite,
-                    refresh: _refreshFavorites,
-                  ),
-                ],
-              ),
-              bottomNavigationBar: BottomNavigationBar(
-                currentIndex: _selectedIndex,
-                onTap: _onNavTap,
-                items: const [
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.cloud),
-                    label: "Weather",
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.star),
-                    label: "Favorites",
-                  ),
-                ],
-              ),
+          home: Scaffold(
+            body: IndexedStack(
+              index: _selectedIndex,
+              children: [
+                HomeScreen(
+                  initialCity: _currentCity,
+                  useFahrenheit: _useFahrenheit,
+                  darkMode: _darkMode,
+                  onFavoritesChanged: _onFavoritesChanged,
+                  onCityChanged: _onCityChanged,
+                  onSettingsPressed: () => _openSettings(context),
+                ),
+                FavoritesScreen(
+                  onSelectCity: _onSelectFavorite,
+                  refresh: _refreshFavorites,
+                ),
+              ],
+            ),
+            bottomNavigationBar: BottomNavigationBar(
+              currentIndex: _selectedIndex,
+              onTap: _onNavTap,
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.cloud),
+                  label: "Weather",
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.star),
+                  label: "Favorites",
+                ),
+              ],
             ),
           ),
         );
