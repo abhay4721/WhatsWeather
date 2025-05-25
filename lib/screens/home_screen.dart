@@ -34,6 +34,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   WeatherResponse? weather;
+  bool _triedAutoLocation = false;
   bool isLoading = true;
   late String _city;
   TextEditingController _searchController = TextEditingController();
@@ -45,7 +46,8 @@ class _HomeScreenState extends State<HomeScreen> {
     _city = widget.initialCity;
     _searchController.text = _city;
     _initFavorites();
-    fetchForCity(_city);
+    _autoFetchLocationWeather();
+    // fetchForCity(_city); lets see,,,
   }
 
   @override
@@ -57,6 +59,26 @@ class _HomeScreenState extends State<HomeScreen> {
       fetchForCity(_city);
     }
   }
+
+  Future<void> _autoFetchLocationWeather() async {
+  if (!_triedAutoLocation) {
+    _triedAutoLocation = true;
+    try {
+      final position = await GeocodingService.getCurrentLocation();
+      final data = await WeatherService.fetchWeather(latitude: position.latitude, longitude: position.longitude);
+      setState(() {
+        weather = data;
+        _city = "My Location";
+        _searchController.text = "";
+        isLoading = false;
+      });
+      return;
+    } catch (e) {
+      // Location failed or denied. Fallback to initialCity:
+      fetchForCity(_city);
+    }
+  }
+}
 
   Future<void> _initFavorites() async {
     final favs = await FavoritesService.loadFavorites();
