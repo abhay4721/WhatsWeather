@@ -7,6 +7,7 @@ class WeatherSearchBar extends StatelessWidget {
   final VoidCallback onSearch;
   final VoidCallback onFavorite;
   final bool isFavorite;
+  final VoidCallback? onUseCurrentLocation;
 
   const WeatherSearchBar({
     super.key,
@@ -14,6 +15,7 @@ class WeatherSearchBar extends StatelessWidget {
     required this.onSearch,
     required this.onFavorite,
     required this.isFavorite,
+    this.onUseCurrentLocation,
   });
 
   @override
@@ -89,6 +91,11 @@ class WeatherSearchBar extends StatelessWidget {
             ),
             tooltip: isFavorite ? "Remove Favorite" : "Add Favorite",
             onPressed: onFavorite,
+          ),
+          IconButton(
+            icon: Icon(Icons.my_location, color: scheme.primary),
+            tooltip: "Use Current Location",
+            onPressed: onUseCurrentLocation,
           ),
           IconButton(
             icon: Icon(Icons.arrow_forward_ios_rounded, color: scheme.primary),

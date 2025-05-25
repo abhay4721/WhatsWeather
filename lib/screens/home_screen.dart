@@ -89,6 +89,27 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  //again add geolocation
+  Future<void> _fetchCurrentLocation() async {
+  setState(() => isLoading = true);
+  try {
+    final position = await GeocodingService.getCurrentLocation();
+    final data = await WeatherService.fetchWeather(latitude: position.latitude, longitude: position.longitude);
+    setState(() {
+      weather = data;
+      _city = "My Location";
+      _searchController.text = "";
+      isLoading = false;
+    });
+  } catch (e) {
+    setState(() => isLoading = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Failed to get location: $e")),
+    );
+  }
+}
+
+
   Future<void> _searchCity() async {
     if (_searchController.text.isEmpty) return;
     await fetchForCity(_searchController.text);
@@ -159,6 +180,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   onSearch: _searchCity,
                   onFavorite: _toggleFavorite,
                   isFavorite: _isFavorite,
+                  onUseCurrentLocation: _fetchCurrentLocation,
                 ),
                 const SizedBox(height: 10),
                 if (isLoading)
