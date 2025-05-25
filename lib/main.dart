@@ -3,8 +3,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'screens/home_screen.dart';
 import 'screens/favorites_screen.dart';
+import 'services/notification_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await NotificationService.init(); // Make sure to init notifications!
   runApp(const WhatsWeatherApp());
 }
 
@@ -44,7 +47,7 @@ class _WhatsWeatherAppState extends State<WhatsWeatherApp> {
 
   void _toggleTheme() {
     setState(() => _darkMode = !_darkMode);
-    _saveTheme(!_darkMode ? false : true); // Save after change
+    _saveTheme(!_darkMode ? false : true);
   }
 
   void _onNavTap(int idx) => setState(() => _selectedIndex = idx);

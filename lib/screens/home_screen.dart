@@ -10,7 +10,8 @@ import '../widgets/hourly_forecast.dart';
 import '../widgets/weather_search_bar.dart';
 import '../utils/weather_icon.dart';
 import '../utils/lottie_weather.dart';
-import 'daily_details_page.dart'; // <-- Don't forget to import this!
+import 'daily_details_page.dart';
+import '../services/notification_service.dart';
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback? onThemeToggle;
@@ -37,7 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _triedAutoLocation = false;
   bool isLoading = true;
   late String _city;
-  TextEditingController _searchController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
   List<String> _favorites = [];
 
   @override
@@ -47,7 +48,6 @@ class _HomeScreenState extends State<HomeScreen> {
     _searchController.text = _city;
     _initFavorites();
     _autoFetchLocationWeather();
-    // fetchForCity(_city); lets see,,,
   }
 
   @override
@@ -61,28 +61,50 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _autoFetchLocationWeather() async {
-  if (!_triedAutoLocation) {
-    _triedAutoLocation = true;
-    try {
-      final position = await GeocodingService.getCurrentLocation();
-      final data = await WeatherService.fetchWeather(latitude: position.latitude, longitude: position.longitude);
-      setState(() {
-        weather = data;
-        _city = "My Location";
-        _searchController.text = "";
-        isLoading = false;
-      });
-      return;
-    } catch (e) {
-      // Location failed or denied. Fallback to initialCity:
-      fetchForCity(_city);
+    if (!_triedAutoLocation) {
+      _triedAutoLocation = true;
+      try {
+        final position = await GeocodingService.getCurrentLocation();
+        final data = await WeatherService.fetchWeather(
+            latitude: position.latitude, longitude: position.longitude);
+        setState(() {
+          weather = data;
+          _city = "My Location";
+          _searchController.text = "";
+          isLoading = false;
+        });
+        await _checkAndNotifyForTomorrow(); // <-- Notification
+        return;
+      } catch (e) {
+        // Location failed or denied. Fallback to initialCity:
+        await fetchForCity(_city);
+      }
     }
   }
-}
 
   Future<void> _initFavorites() async {
     final favs = await FavoritesService.loadFavorites();
     setState(() => _favorites = favs);
+  }
+
+  Future<void> _checkAndNotifyForTomorrow() async {
+    if (weather == null) return;
+    if (weather!.daily.length < 2) return; // Index 1 = tomorrow
+    final tomorrow = weather!.daily[1];
+    final rainCodes = [61, 63, 65, 80, 81, 82];
+    final thunderCodes = [95, 96, 99];
+
+    if (rainCodes.contains(tomorrow.weathercode)) {
+      await NotificationService.showAlert(
+        "Rain Expected Tomorrow",
+        "Take an umbrella! Rain is predicted tomorrow in ${_city}.",
+      );
+    } else if (thunderCodes.contains(tomorrow.weathercode)) {
+      await NotificationService.showAlert(
+        "Thunderstorm Alert",
+        "Stay safe! Thunderstorm is predicted tomorrow in ${_city}.",
+      );
+    }
   }
 
   Future<void> fetchForCity(String city) async {
@@ -94,43 +116,44 @@ class _HomeScreenState extends State<HomeScreen> {
         _searchController.text = result.name;
       });
       widget.onCityChanged?.call(result.name);
-      final data = await WeatherService.fetchWeather(latitude: result.latitude, longitude: result.longitude);
+      final data = await WeatherService.fetchWeather(
+          latitude: result.latitude, longitude: result.longitude);
       setState(() {
         weather = data;
         isLoading = false;
       });
+      await _checkAndNotifyForTomorrow(); // <-- Notification
     } else {
       setState(() {
         weather = null;
         isLoading = false;
       });
-      // Show snackbar only, don't lock UI!
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('City not found')),
       );
     }
   }
 
-  //again add geolocation
   Future<void> _fetchCurrentLocation() async {
-  setState(() => isLoading = true);
-  try {
-    final position = await GeocodingService.getCurrentLocation();
-    final data = await WeatherService.fetchWeather(latitude: position.latitude, longitude: position.longitude);
-    setState(() {
-      weather = data;
-      _city = "My Location";
-      _searchController.text = "";
-      isLoading = false;
-    });
-  } catch (e) {
-    setState(() => isLoading = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Failed to get location: $e")),
-    );
+    setState(() => isLoading = true);
+    try {
+      final position = await GeocodingService.getCurrentLocation();
+      final data = await WeatherService.fetchWeather(
+          latitude: position.latitude, longitude: position.longitude);
+      setState(() {
+        weather = data;
+        _city = "My Location";
+        _searchController.text = "";
+        isLoading = false;
+      });
+      await _checkAndNotifyForTomorrow(); // <-- Notification
+    } catch (e) {
+      setState(() => isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to get location: $e")),
+      );
+    }
   }
-}
-
 
   Future<void> _searchCity() async {
     if (_searchController.text.isEmpty) return;
