@@ -60,8 +60,22 @@ class HourlyWeather {
   final String time;
   final double temperature;
   final int weathercode;
+  final double? humidity;
+  final double? pressure;
+  final double? windspeed;
+  final double? precipitation;
+  final double? cloudcover;
 
-  HourlyWeather({required this.time, required this.temperature, required this.weathercode});
+  HourlyWeather({
+    required this.time,
+    required this.temperature,
+    required this.weathercode,
+    this.humidity,
+    this.pressure,
+    this.windspeed,
+    this.precipitation,
+    this.cloudcover,
+  });
 }
 
 class DailyWeather {

@@ -313,7 +313,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                       ),
-                      WeeklyForecast(daily: weather!.daily),
+                      WeeklyForecast(
+                        daily: weather!.daily,
+                        hourly: weather!.hourly,
+                      ),
+
                       const SizedBox(height: 30),
                     ],
                   ),

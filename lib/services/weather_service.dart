@@ -32,8 +32,9 @@ class WeatherService {
       "?latitude=$latitude"
       "&longitude=$longitude"
       "&current_weather=true"
-      "&hourly=temperature_2m,weathercode"
-      // ↓ Add all needed daily fields here!
+      // Request all advanced hourly fields!
+      "&hourly=temperature_2m,weathercode,relative_humidity_2m,pressure_msl,windspeed_10m,precipitation,cloudcover"
+      // Request only safe daily fields for all regions
       "&daily=temperature_2m_max,temperature_2m_min,weathercode,sunrise,sunset"
       "&weather_alerts=true"
       "&timezone=auto"
@@ -55,23 +56,32 @@ class WeatherService {
       final List times = data['hourly']['time'];
       final List temps = data['hourly']['temperature_2m'];
       final List wcodes = data['hourly']['weathercode'];
+      final List humidities = data['hourly']['relative_humidity_2m'];
+      final List pressures = data['hourly']['pressure_msl'];
+      final List winds = data['hourly']['windspeed_10m'];
+      final List precs = data['hourly']['precipitation'];
+      final List clouds = data['hourly']['cloudcover'];
+
       for (int i = 0; i < times.length; i++) {
         hourly.add(HourlyWeather(
           time: times[i],
           temperature: (temps[i] as num).toDouble(),
           weathercode: wcodes[i],
+          humidity: humidities.isNotEmpty ? (humidities[i] as num?)?.toDouble() : null,
+          pressure: pressures.isNotEmpty ? (pressures[i] as num?)?.toDouble() : null,
+          windspeed: winds.isNotEmpty ? (winds[i] as num?)?.toDouble() : null,
+          precipitation: precs.isNotEmpty ? (precs[i] as num?)?.toDouble() : null,
+          cloudcover: clouds.isNotEmpty ? (clouds[i] as num?)?.toDouble() : null,
         ));
       }
 
-      // Parse daily (robustly: if missing, fill as null)
+      // Parse daily (for India, humidity/pressure are always null)
       final List<DailyWeather> daily = [];
       final dailyJson = data['daily'];
       final List days = dailyJson['time'];
       final List maxTemps = dailyJson['temperature_2m_max'];
       final List minTemps = dailyJson['temperature_2m_min'];
       final List dailyWcodes = dailyJson['weathercode'];
-      final List? humidities = dailyJson['humidity_2m_max'];
-      final List? pressures = dailyJson['pressure_msl_max'];
       final List? sunrises = dailyJson['sunrise'];
       final List? sunsets = dailyJson['sunset'];
 
@@ -81,18 +91,10 @@ class WeatherService {
           maxTemp: (maxTemps[i] as num).toDouble(),
           minTemp: (minTemps[i] as num).toDouble(),
           weathercode: dailyWcodes[i],
-          humidity: humidities != null && i < humidities.length
-              ? (humidities[i] as num?)?.toDouble()
-              : null,
-          pressure: pressures != null && i < pressures.length
-              ? (pressures[i] as num?)?.toDouble()
-              : null,
-          sunrise: sunrises != null && i < sunrises.length
-              ? sunrises[i]
-              : null,
-          sunset: sunsets != null && i < sunsets.length
-              ? sunsets[i]
-              : null,
+          humidity: null, // Always null for India (see explanation)
+          pressure: null, // Always null for India
+          sunrise: sunrises != null && i < sunrises.length ? sunrises[i] : null,
+          sunset: sunsets != null && i < sunsets.length ? sunsets[i] : null,
         ));
       }
 
