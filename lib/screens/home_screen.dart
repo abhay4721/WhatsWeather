@@ -231,7 +231,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               children: [
                                 // Lottie animated weather icon!
                                 Lottie.asset(
-                                  lottieForWeather(weather!.current.weathercode),
+                                  lottieForWeather(weather!.current.weathercode, hour: DateTime.now().hour),
                                   width: 96,
                                   height: 96,
                                   repeat: true,
