@@ -8,26 +8,27 @@ import '../services/favorites_service.dart';
 import '../widgets/weekly_forecast.dart';
 import '../widgets/hourly_forecast.dart';
 import '../widgets/weather_search_bar.dart';
-import '../utils/weather_icon.dart';
 import '../utils/lottie_weather.dart';
 import 'daily_details_page.dart';
 import '../services/notification_service.dart';
 
 class HomeScreen extends StatefulWidget {
-  final VoidCallback? onThemeToggle;
   final bool darkMode;
   final String initialCity;
+  final bool useFahrenheit;
   final VoidCallback? onFavoritesChanged;
   final ValueChanged<String>? onCityChanged;
+  final VoidCallback onSettingsPressed;
 
   const HomeScreen({
-    super.key,
-    this.onThemeToggle,
+    Key? key,
+    required this.initialCity,
+    required this.useFahrenheit,
+    required this.onSettingsPressed,
     this.darkMode = false,
-    this.initialCity = "Delhi",
     this.onFavoritesChanged,
     this.onCityChanged,
-  });
+  }) : super(key: key);
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -66,14 +67,17 @@ class _HomeScreenState extends State<HomeScreen> {
       try {
         final position = await GeocodingService.getCurrentLocation();
         final data = await WeatherService.fetchWeather(
-            latitude: position.latitude, longitude: position.longitude);
+          latitude: position.latitude,
+          longitude: position.longitude,
+          useFahrenheit: widget.useFahrenheit,
+        );
         setState(() {
           weather = data;
           _city = "My Location";
           _searchController.text = "";
           isLoading = false;
         });
-        await _checkAndNotifyForTomorrow(); // <-- Notification
+        await _checkAndNotifyForTomorrow();
         return;
       } catch (e) {
         // Location failed or denied. Fallback to initialCity:
@@ -89,7 +93,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _checkAndNotifyForTomorrow() async {
     if (weather == null) return;
-    if (weather!.daily.length < 2) return; // Index 1 = tomorrow
+    if (weather!.daily.length < 2) return;
     final tomorrow = weather!.daily[1];
     final rainCodes = [61, 63, 65, 80, 81, 82];
     final thunderCodes = [95, 96, 99];
@@ -117,12 +121,15 @@ class _HomeScreenState extends State<HomeScreen> {
       });
       widget.onCityChanged?.call(result.name);
       final data = await WeatherService.fetchWeather(
-          latitude: result.latitude, longitude: result.longitude);
+        latitude: result.latitude,
+        longitude: result.longitude,
+        useFahrenheit: widget.useFahrenheit,
+      );
       setState(() {
         weather = data;
         isLoading = false;
       });
-      await _checkAndNotifyForTomorrow(); // <-- Notification
+      await _checkAndNotifyForTomorrow();
     } else {
       setState(() {
         weather = null;
@@ -139,14 +146,17 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final position = await GeocodingService.getCurrentLocation();
       final data = await WeatherService.fetchWeather(
-          latitude: position.latitude, longitude: position.longitude);
+        latitude: position.latitude,
+        longitude: position.longitude,
+        useFahrenheit: widget.useFahrenheit,
+      );
       setState(() {
         weather = data;
         _city = "My Location";
         _searchController.text = "";
         isLoading = false;
       });
-      await _checkAndNotifyForTomorrow(); // <-- Notification
+      await _checkAndNotifyForTomorrow();
     } catch (e) {
       setState(() => isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -161,7 +171,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _toggleFavorite() async {
-    if (_city == "My Location") return; // Don't favorite GPS
+    if (_city == "My Location") return;
     setState(() {
       if (_favorites.contains(_city)) {
         _favorites.remove(_city);
@@ -178,6 +188,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final tempUnit = widget.useFahrenheit ? "°F" : "°C";
 
     return Scaffold(
       appBar: AppBar(
@@ -193,12 +204,12 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         actions: [
           IconButton(
-            icon: Icon(
-              widget.darkMode ? Icons.dark_mode : Icons.light_mode,
-              color: scheme.onPrimaryContainer,
-            ),
-            tooltip: 'Toggle Theme',
-            onPressed: widget.onThemeToggle,
+            icon: Icon(Icons.settings, color: scheme.onPrimaryContainer),
+            tooltip: 'Settings',
+            onPressed: () async {
+              // Call parent-provided settings handler (which opens SettingsScreen)
+              widget.onSettingsPressed();
+            },
           ),
         ],
       ),
@@ -315,7 +326,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                   const SizedBox(height: 16),
                                   Text(
-                                    '${weather!.current.temperature.toStringAsFixed(1)}°C',
+                                    '${weather!.current.temperature.toStringAsFixed(1)}$tempUnit',
                                     style: TextStyle(
                                       fontSize: 44,
                                       fontWeight: FontWeight.bold,

@@ -26,16 +26,19 @@ class WeatherService {
   static Future<WeatherResponseWithAlerts?> fetchWeather({
     double latitude = defaultLatitude,
     double longitude = defaultLongitude,
+    bool useFahrenheit = false, // <--- Added for unit toggle
   }) async {
+    // Select units based on toggle
+    final tempUnit = useFahrenheit ? "fahrenheit" : "celsius";
+
     final url = Uri.parse(
       "$openMeteoBaseUrl"
       "?latitude=$latitude"
       "&longitude=$longitude"
       "&current_weather=true"
-      // Request all advanced hourly fields!
       "&hourly=temperature_2m,weathercode,relative_humidity_2m,pressure_msl,windspeed_10m,precipitation,cloudcover"
-      // Request only safe daily fields for all regions
-      "&daily=temperature_2m_max,temperature_2m_min,weathercode,sunrise,sunset"
+      "&daily=temperature_2m_max,temperature_2m_min,weathercode,sunrise,sunset,pressure_msl_max"
+      "&temperature_unit=$tempUnit"
       "&weather_alerts=true"
       "&timezone=auto"
     );
@@ -75,13 +78,15 @@ class WeatherService {
         ));
       }
 
-      // Parse daily (for India, humidity/pressure are always null)
+      // Parse daily
       final List<DailyWeather> daily = [];
       final dailyJson = data['daily'];
       final List days = dailyJson['time'];
       final List maxTemps = dailyJson['temperature_2m_max'];
       final List minTemps = dailyJson['temperature_2m_min'];
       final List dailyWcodes = dailyJson['weathercode'];
+      final List? humiditiesMax = dailyJson['humidity_2m_max'];
+      final List? pressuresMax = dailyJson['pressure_msl_max'];
       final List? sunrises = dailyJson['sunrise'];
       final List? sunsets = dailyJson['sunset'];
 
@@ -91,10 +96,18 @@ class WeatherService {
           maxTemp: (maxTemps[i] as num).toDouble(),
           minTemp: (minTemps[i] as num).toDouble(),
           weathercode: dailyWcodes[i],
-          humidity: null, // Always null for India (see explanation)
-          pressure: null, // Always null for India
-          sunrise: sunrises != null && i < sunrises.length ? sunrises[i] : null,
-          sunset: sunsets != null && i < sunsets.length ? sunsets[i] : null,
+          humidity: humiditiesMax != null && i < humiditiesMax.length
+              ? (humiditiesMax[i] as num?)?.toDouble()
+              : null,
+          pressure: pressuresMax != null && i < pressuresMax.length
+              ? (pressuresMax[i] as num?)?.toDouble()
+              : null,
+          sunrise: sunrises != null && i < sunrises.length
+              ? sunrises[i]
+              : null,
+          sunset: sunsets != null && i < sunsets.length
+              ? sunsets[i]
+              : null,
         ));
       }
 
