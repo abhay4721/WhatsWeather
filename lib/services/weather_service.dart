@@ -3,11 +3,23 @@ import 'package:http/http.dart' as http;
 import '../models/weather_model.dart';
 import '../config.dart';
 
+// Weather alert model
 class WeatherAlert {
   final String event;
   final String description;
 
   WeatherAlert({required this.event, required this.description});
+}
+
+// New wrapper model with alerts
+class WeatherResponseWithAlerts extends WeatherResponse {
+  final List<WeatherAlert> alerts;
+  WeatherResponseWithAlerts({
+    required CurrentWeather current,
+    required List<HourlyWeather> hourly,
+    required List<DailyWeather> daily,
+    required this.alerts,
+  }) : super(current: current, hourly: hourly, daily: daily);
 }
 
 class WeatherService {
@@ -21,11 +33,16 @@ class WeatherService {
       "&longitude=$longitude"
       "&current_weather=true"
       "&hourly=temperature_2m,weathercode"
-      "&daily=temperature_2m_max,temperature_2m_min,weathercode"
+      // ↓ Add all needed daily fields here!
+      "&daily=temperature_2m_max,temperature_2m_min,weathercode,sunrise,sunset"
       "&weather_alerts=true"
       "&timezone=auto"
     );
     final response = await http.get(url);
+
+    // Debug: Print URL and response for troubleshooting
+    print('API URL: $url');
+    print('API RESPONSE: ${response.body}');
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
@@ -46,18 +63,36 @@ class WeatherService {
         ));
       }
 
-      // Parse daily
+      // Parse daily (robustly: if missing, fill as null)
       final List<DailyWeather> daily = [];
-      final List days = data['daily']['time'];
-      final List maxTemps = data['daily']['temperature_2m_max'];
-      final List minTemps = data['daily']['temperature_2m_min'];
-      final List dailyWcodes = data['daily']['weathercode'];
+      final dailyJson = data['daily'];
+      final List days = dailyJson['time'];
+      final List maxTemps = dailyJson['temperature_2m_max'];
+      final List minTemps = dailyJson['temperature_2m_min'];
+      final List dailyWcodes = dailyJson['weathercode'];
+      final List? humidities = dailyJson['humidity_2m_max'];
+      final List? pressures = dailyJson['pressure_msl_max'];
+      final List? sunrises = dailyJson['sunrise'];
+      final List? sunsets = dailyJson['sunset'];
+
       for (int i = 0; i < days.length; i++) {
         daily.add(DailyWeather(
           date: days[i],
           maxTemp: (maxTemps[i] as num).toDouble(),
           minTemp: (minTemps[i] as num).toDouble(),
           weathercode: dailyWcodes[i],
+          humidity: humidities != null && i < humidities.length
+              ? (humidities[i] as num?)?.toDouble()
+              : null,
+          pressure: pressures != null && i < pressures.length
+              ? (pressures[i] as num?)?.toDouble()
+              : null,
+          sunrise: sunrises != null && i < sunrises.length
+              ? sunrises[i]
+              : null,
+          sunset: sunsets != null && i < sunsets.length
+              ? sunsets[i]
+              : null,
         ));
       }
 
@@ -81,18 +116,8 @@ class WeatherService {
         alerts: alerts,
       );
     } else {
+      print("Weather API error: ${response.statusCode}");
       return null;
     }
   }
-}
-
-// New wrapper model with alerts
-class WeatherResponseWithAlerts extends WeatherResponse {
-  final List<WeatherAlert> alerts;
-  WeatherResponseWithAlerts({
-    required CurrentWeather current,
-    required List<HourlyWeather> hourly,
-    required List<DailyWeather> daily,
-    required this.alerts,
-  }) : super(current: current, hourly: hourly, daily: daily);
 }
