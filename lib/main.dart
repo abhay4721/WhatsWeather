@@ -8,7 +8,7 @@ import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await NotificationService.init(); // For notifications
+  await NotificationService.init();
   runApp(const WhatsWeatherApp());
 }
 
@@ -24,6 +24,7 @@ class _WhatsWeatherAppState extends State<WhatsWeatherApp> {
   String _currentCity = "Delhi";
   int _refreshFavorites = 0;
   bool _useFahrenheit = false;
+  int _homeScreenRefresh = 0; // <-- this forces HomeScreen to refresh
 
   ColorScheme? _lightScheme;
   ColorScheme? _darkScheme;
@@ -58,6 +59,7 @@ class _WhatsWeatherAppState extends State<WhatsWeatherApp> {
     setState(() {
       _currentCity = city;
       _selectedIndex = 0;
+      _homeScreenRefresh++; // triggers HomeScreen reload
     });
     _savePrefs();
   }
@@ -65,11 +67,11 @@ class _WhatsWeatherAppState extends State<WhatsWeatherApp> {
   void _onCityChanged(String city) {
     setState(() {
       _currentCity = city;
+      _homeScreenRefresh++; // triggers HomeScreen reload
     });
     _savePrefs();
   }
 
-  // THIS FIXES THE ERROR!
   void _openSettings(BuildContext context) async {
     final result = await Navigator.push(
       context,
@@ -81,13 +83,12 @@ class _WhatsWeatherAppState extends State<WhatsWeatherApp> {
         ),
       ),
     );
-
-    // result is a map: {'darkMode':bool, 'useFahrenheit':bool, 'defaultCity':String}
     if (result != null && result is Map<String, dynamic>) {
       setState(() {
         _darkMode = result['darkMode'] ?? _darkMode;
         _useFahrenheit = result['useFahrenheit'] ?? _useFahrenheit;
         _currentCity = result['defaultCity'] ?? _currentCity;
+        _homeScreenRefresh++; // <-- force HomeScreen rebuild/refetch
       });
       _savePrefs();
     }
@@ -118,6 +119,7 @@ class _WhatsWeatherAppState extends State<WhatsWeatherApp> {
                 index: _selectedIndex,
                 children: [
                   HomeScreen(
+                    key: ValueKey(_homeScreenRefresh), // force reload after settings change
                     initialCity: _currentCity,
                     useFahrenheit: _useFahrenheit,
                     darkMode: _darkMode,

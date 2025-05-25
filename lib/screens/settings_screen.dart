@@ -40,51 +40,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Settings'),
+        title: const Text("Settings"),
         actions: [
           IconButton(
             icon: const Icon(Icons.check),
+            tooltip: "Save",
             onPressed: _saveAndExit,
-            tooltip: 'Save',
           )
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 22),
+        padding: const EdgeInsets.all(24),
         children: [
           SwitchListTile(
-            title: const Text("Dark Mode"),
             value: _darkMode,
-            onChanged: (val) => setState(() => _darkMode = val),
-            secondary: Icon(_darkMode ? Icons.dark_mode : Icons.light_mode),
+            title: const Text("Dark Mode"),
+            onChanged: (v) => setState(() => _darkMode = v),
+            secondary: const Icon(Icons.dark_mode),
           ),
           SwitchListTile(
-            title: const Text("Temperature in °F (Fahrenheit)"),
             value: _useFahrenheit,
-            onChanged: (val) => setState(() => _useFahrenheit = val),
-            secondary: Icon(Icons.thermostat),
+            title: const Text("Use Fahrenheit (°F)"),
+            onChanged: (v) => setState(() => _useFahrenheit = v),
+            secondary: const Icon(Icons.thermostat),
           ),
-          const SizedBox(height: 22),
+          const SizedBox(height: 24),
           TextField(
             controller: _cityController,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               labelText: "Default City",
-              prefixIcon: const Icon(Icons.location_city),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-              filled: true,
-              fillColor: scheme.surfaceVariant.withOpacity(0.7),
-            ),
-          ),
-          const SizedBox(height: 36),
-          ElevatedButton.icon(
-            icon: const Icon(Icons.save),
-            label: const Text("Save Settings"),
-            onPressed: _saveAndExit,
-            style: ElevatedButton.styleFrom(
-              minimumSize: const Size(130, 44),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.location_city),
             ),
           ),
         ],
