@@ -10,6 +10,7 @@ import '../widgets/hourly_forecast.dart';
 import '../widgets/weather_search_bar.dart';
 import '../utils/weather_icon.dart';
 import '../utils/lottie_weather.dart';
+import 'daily_details_page.dart'; // <-- Don't forget to import this!
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback? onThemeToggle;
@@ -153,7 +154,6 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // --- Search bar is ALWAYS visible ---
                 WeatherSearchBar(
                   controller: _searchController,
                   onSearch: _searchCity,
@@ -161,13 +161,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   isFavorite: _isFavorite,
                 ),
                 const SizedBox(height: 10),
-                // Loading spinner if loading
                 if (isLoading)
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 60),
                     child: Center(child: CircularProgressIndicator()),
                   )
-                // Error message and retry button if weather == null (but not loading)
                 else if (weather == null)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 32.0, horizontal: 22),
@@ -200,82 +198,93 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                   )
-                // Otherwise, show weather UI
                 else
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Main weather card with Lottie icon
+                      // --- Main weather card: Now tappable! ---
                       Center(
-                        child: Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: scheme.primaryContainer.withOpacity(0.83),
-                            borderRadius: BorderRadius.circular(36),
-                            border: Border.all(
-                              color: scheme.primary.withOpacity(0.13),
-                              width: 1.2,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.11),
-                                blurRadius: 20,
-                                offset: const Offset(0, 8),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(36),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => DailyDetailsPage(
+                                  day: weather!.daily.first,
+                                  hourly: weather!.hourly,
+                                ),
                               ),
-                            ],
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 36),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                // Lottie animated weather icon!
-                                Lottie.asset(
-                                  lottieForWeather(weather!.current.weathercode, hour: DateTime.now().hour),
-                                  width: 96,
-                                  height: 96,
-                                  repeat: true,
-                                  fit: BoxFit.contain,
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  '${weather!.current.temperature.toStringAsFixed(1)}°C',
-                                  style: TextStyle(
-                                    fontSize: 44,
-                                    fontWeight: FontWeight.bold,
-                                    color: scheme.onPrimaryContainer,
-                                    letterSpacing: -2,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  _weatherDescription(weather!.current.weathercode),
-                                  style: TextStyle(
-                                    color: scheme.onPrimaryContainer.withOpacity(0.8),
-                                    fontSize: 18,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.air, color: scheme.secondary, size: 20),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      'Wind: ${weather!.current.windspeed.toStringAsFixed(1)} km/h',
-                                      style: TextStyle(
-                                        color: scheme.onPrimaryContainer.withOpacity(0.8),
-                                      ),
-                                    ),
-                                  ],
+                            );
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: scheme.primaryContainer.withOpacity(0.83),
+                              borderRadius: BorderRadius.circular(36),
+                              border: Border.all(
+                                color: scheme.primary.withOpacity(0.13),
+                                width: 1.2,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.11),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 8),
                                 ),
                               ],
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 36),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Lottie.asset(
+                                    lottieForWeather(weather!.current.weathercode, hour: DateTime.now().hour),
+                                    width: 96,
+                                    height: 96,
+                                    repeat: true,
+                                    fit: BoxFit.contain,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    '${weather!.current.temperature.toStringAsFixed(1)}°C',
+                                    style: TextStyle(
+                                      fontSize: 44,
+                                      fontWeight: FontWeight.bold,
+                                      color: scheme.onPrimaryContainer,
+                                      letterSpacing: -2,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    _weatherDescription(weather!.current.weathercode),
+                                    style: TextStyle(
+                                      color: scheme.onPrimaryContainer.withOpacity(0.8),
+                                      fontSize: 18,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.air, color: scheme.secondary, size: 20),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Wind: ${weather!.current.windspeed.toStringAsFixed(1)} km/h',
+                                        style: TextStyle(
+                                          color: scheme.onPrimaryContainer.withOpacity(0.8),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
                       ),
                       const SizedBox(height: 8),
-                      // "Today" headline
                       Padding(
                         padding: const EdgeInsets.fromLTRB(20, 14, 20, 6),
                         child: Row(
@@ -301,7 +310,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       HourlyForecast(hourly: weather!.hourly),
                       const SizedBox(height: 14),
-                      // Weekly
                       Padding(
                         padding: const EdgeInsets.fromLTRB(20, 18, 20, 4),
                         child: Text(
@@ -317,7 +325,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         daily: weather!.daily,
                         hourly: weather!.hourly,
                       ),
-
                       const SizedBox(height: 30),
                     ],
                   ),
