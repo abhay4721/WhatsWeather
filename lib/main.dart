@@ -24,7 +24,6 @@ class _WhatsWeatherAppState extends State<WhatsWeatherApp> {
   String _currentCity = "Delhi";
   int _refreshFavorites = 0;
   bool _useFahrenheit = false;
-  bool _isPrefsLoaded = false; // <-- Add this flag
 
   ColorScheme? _lightScheme;
   ColorScheme? _darkScheme;
@@ -41,11 +40,15 @@ class _WhatsWeatherAppState extends State<WhatsWeatherApp> {
       _darkMode = prefs.getBool('darkMode') ?? false;
       _currentCity = prefs.getString('defaultCity') ?? "Delhi";
       _useFahrenheit = prefs.getBool('useFahrenheit') ?? false;
-      _isPrefsLoaded = true; // <-- Only show app after loading
     });
   }
 
-  // ... (rest of your methods remain unchanged)
+  Future<void> _savePrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('darkMode', _darkMode);
+    await prefs.setString('defaultCity', _currentCity);
+    await prefs.setBool('useFahrenheit', _useFahrenheit);
+  }
 
   void _onNavTap(int idx) => setState(() => _selectedIndex = idx);
 
@@ -66,14 +69,7 @@ class _WhatsWeatherAppState extends State<WhatsWeatherApp> {
     _savePrefs();
   }
 
-  Future<void> _savePrefs() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('darkMode', _darkMode);
-    await prefs.setString('defaultCity', _currentCity);
-    await prefs.setBool('useFahrenheit', _useFahrenheit);
-  }
-
-  void _openSettings(BuildContext context) async {
+  Future<void> _openSettings(BuildContext context) async {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -84,7 +80,6 @@ class _WhatsWeatherAppState extends State<WhatsWeatherApp> {
         ),
       ),
     );
-
     if (result != null && result is Map<String, dynamic>) {
       setState(() {
         _darkMode = result['darkMode'] ?? _darkMode;
@@ -97,20 +92,6 @@ class _WhatsWeatherAppState extends State<WhatsWeatherApp> {
 
   @override
   Widget build(BuildContext context) {
-    // --- SHOW A SPLASH/LOADING SCREEN UNTIL PREFS LOADED ---
-    if (!_isPrefsLoaded) {
-      return MaterialApp(
-        home: Scaffold(
-          backgroundColor: Colors.black, // Or dark color if you want!
-          body: Center(
-            child: CircularProgressIndicator(),
-          ),
-        ),
-        debugShowCheckedModeBanner: false,
-      );
-    }
-
-    // --- REST OF YOUR APP ---
     return DynamicColorBuilder(
       builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
         _lightScheme = lightDynamic ?? ColorScheme.fromSeed(seedColor: Colors.blue);
@@ -128,37 +109,39 @@ class _WhatsWeatherAppState extends State<WhatsWeatherApp> {
           ),
           themeMode: _darkMode ? ThemeMode.dark : ThemeMode.light,
           debugShowCheckedModeBanner: false,
-          home: Scaffold(
-            body: IndexedStack(
-              index: _selectedIndex,
-              children: [
-                HomeScreen(
-                  initialCity: _currentCity,
-                  useFahrenheit: _useFahrenheit,
-                  darkMode: _darkMode,
-                  onFavoritesChanged: _onFavoritesChanged,
-                  onCityChanged: _onCityChanged,
-                  onSettingsPressed: () => _openSettings(context),
-                ),
-                FavoritesScreen(
-                  onSelectCity: _onSelectFavorite,
-                  refresh: _refreshFavorites,
-                ),
-              ],
-            ),
-            bottomNavigationBar: BottomNavigationBar(
-              currentIndex: _selectedIndex,
-              onTap: _onNavTap,
-              items: const [
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.cloud),
-                  label: "Weather",
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.star),
-                  label: "Favorites",
-                ),
-              ],
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: IndexedStack(
+                index: _selectedIndex,
+                children: [
+                  HomeScreen(
+                    initialCity: _currentCity,
+                    useFahrenheit: _useFahrenheit,
+                    darkMode: _darkMode,
+                    onFavoritesChanged: _onFavoritesChanged,
+                    onCityChanged: _onCityChanged,
+                    onSettingsPressed: () => _openSettings(context),
+                  ),
+                  FavoritesScreen(
+                    onSelectCity: _onSelectFavorite,
+                    refresh: _refreshFavorites,
+                  ),
+                ],
+              ),
+              bottomNavigationBar: BottomNavigationBar(
+                currentIndex: _selectedIndex,
+                onTap: _onNavTap,
+                items: const [
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.cloud),
+                    label: "Weather",
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.star),
+                    label: "Favorites",
+                  ),
+                ],
+              ),
             ),
           ),
         );

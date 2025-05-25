@@ -8,6 +8,7 @@ import '../services/favorites_service.dart';
 import '../widgets/weekly_forecast.dart';
 import '../widgets/hourly_forecast.dart';
 import '../widgets/weather_search_bar.dart';
+import '../utils/weather_icon.dart';
 import '../utils/lottie_weather.dart';
 import 'daily_details_page.dart';
 import '../services/notification_service.dart';
@@ -59,6 +60,10 @@ class _HomeScreenState extends State<HomeScreen> {
       _searchController.text = _city;
       fetchForCity(_city);
     }
+    // Update if unit changes
+    if (widget.useFahrenheit != oldWidget.useFahrenheit) {
+      fetchForCity(_city);
+    }
   }
 
   Future<void> _autoFetchLocationWeather() async {
@@ -67,10 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
       try {
         final position = await GeocodingService.getCurrentLocation();
         final data = await WeatherService.fetchWeather(
-          latitude: position.latitude,
-          longitude: position.longitude,
-          useFahrenheit: widget.useFahrenheit,
-        );
+            latitude: position.latitude, longitude: position.longitude, useFahrenheit: widget.useFahrenheit);
         setState(() {
           weather = data;
           _city = "My Location";
@@ -80,7 +82,6 @@ class _HomeScreenState extends State<HomeScreen> {
         await _checkAndNotifyForTomorrow();
         return;
       } catch (e) {
-        // Location failed or denied. Fallback to initialCity:
         await fetchForCity(_city);
       }
     }
@@ -93,7 +94,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _checkAndNotifyForTomorrow() async {
     if (weather == null) return;
-    if (weather!.daily.length < 2) return;
+    if (weather!.daily.length < 2) return; // Index 1 = tomorrow
     final tomorrow = weather!.daily[1];
     final rainCodes = [61, 63, 65, 80, 81, 82];
     final thunderCodes = [95, 96, 99];
@@ -121,10 +122,7 @@ class _HomeScreenState extends State<HomeScreen> {
       });
       widget.onCityChanged?.call(result.name);
       final data = await WeatherService.fetchWeather(
-        latitude: result.latitude,
-        longitude: result.longitude,
-        useFahrenheit: widget.useFahrenheit,
-      );
+          latitude: result.latitude, longitude: result.longitude, useFahrenheit: widget.useFahrenheit);
       setState(() {
         weather = data;
         isLoading = false;
@@ -146,10 +144,7 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final position = await GeocodingService.getCurrentLocation();
       final data = await WeatherService.fetchWeather(
-        latitude: position.latitude,
-        longitude: position.longitude,
-        useFahrenheit: widget.useFahrenheit,
-      );
+          latitude: position.latitude, longitude: position.longitude, useFahrenheit: widget.useFahrenheit);
       setState(() {
         weather = data;
         _city = "My Location";
@@ -171,7 +166,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _toggleFavorite() async {
-    if (_city == "My Location") return;
+    if (_city == "My Location") return; // Don't favorite GPS
     setState(() {
       if (_favorites.contains(_city)) {
         _favorites.remove(_city);
@@ -206,10 +201,7 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             icon: Icon(Icons.settings, color: scheme.onPrimaryContainer),
             tooltip: 'Settings',
-            onPressed: () async {
-              // Call parent-provided settings handler (which opens SettingsScreen)
-              widget.onSettingsPressed();
-            },
+            onPressed: widget.onSettingsPressed,
           ),
         ],
       ),

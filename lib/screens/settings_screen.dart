@@ -29,8 +29,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _cityController = TextEditingController(text: widget.defaultCity);
   }
 
+  @override
+  void dispose() {
+    _cityController.dispose();
+    super.dispose();
+  }
+
   void _saveAndExit() {
-    Navigator.pop(context, {
+    Navigator.of(context).pop({
       'darkMode': _darkMode,
       'useFahrenheit': _useFahrenheit,
       'defaultCity': _cityController.text.trim().isEmpty ? "Delhi" : _cityController.text.trim(),
@@ -44,36 +50,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Settings"),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.check),
-            tooltip: "Save",
-            onPressed: _saveAndExit,
-          )
-        ],
+        backgroundColor: scheme.primaryContainer,
       ),
       body: ListView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(20),
         children: [
           SwitchListTile(
             value: _darkMode,
+            onChanged: (val) => setState(() => _darkMode = val),
             title: const Text("Dark Mode"),
-            onChanged: (v) => setState(() => _darkMode = v),
             secondary: const Icon(Icons.dark_mode),
           ),
           SwitchListTile(
             value: _useFahrenheit,
+            onChanged: (val) => setState(() => _useFahrenheit = val),
             title: const Text("Use Fahrenheit (°F)"),
-            onChanged: (v) => setState(() => _useFahrenheit = v),
             secondary: const Icon(Icons.thermostat),
           ),
-          const SizedBox(height: 24),
           TextField(
             controller: _cityController,
             decoration: const InputDecoration(
               labelText: "Default City",
               border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.location_city),
+            ),
+          ),
+          const SizedBox(height: 30),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.check),
+            label: const Text("Save"),
+            onPressed: _saveAndExit,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: scheme.primary,
+              foregroundColor: scheme.onPrimary,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
           ),
         ],
