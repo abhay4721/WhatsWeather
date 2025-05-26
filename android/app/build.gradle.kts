@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.whatsweather"
+    namespace = "com.whatsweather.whatsweather"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = "27.0.12077973"
 

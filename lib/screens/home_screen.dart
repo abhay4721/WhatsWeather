@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
+import 'package:home_widget/home_widget.dart';
+
 import '../models/weather_model.dart';
 import '../services/weather_service.dart';
 import '../services/geocoding_service.dart';
@@ -8,7 +10,6 @@ import '../services/favorites_service.dart';
 import '../widgets/weekly_forecast.dart';
 import '../widgets/hourly_forecast.dart';
 import '../widgets/weather_search_bar.dart';
-import '../utils/weather_icon.dart';
 import '../utils/lottie_weather.dart';
 import 'daily_details_page.dart';
 import '../services/notification_service.dart';
@@ -75,6 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _searchController.text = "";
           isLoading = false;
         });
+        await _updateHomeWidget();
         await _checkAndNotifyForTomorrow();
         return;
       } catch (e) {
@@ -123,6 +125,7 @@ class _HomeScreenState extends State<HomeScreen> {
         weather = data;
         isLoading = false;
       });
+      await _updateHomeWidget();
       await _checkAndNotifyForTomorrow();
     } else {
       setState(() {
@@ -130,7 +133,7 @@ class _HomeScreenState extends State<HomeScreen> {
         isLoading = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('City not found. Try typing only the city name, e.g., "Kochi".')),
+        const SnackBar(content: Text('City not found')),
       );
     }
   }
@@ -147,6 +150,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _searchController.text = "";
         isLoading = false;
       });
+      await _updateHomeWidget();
       await _checkAndNotifyForTomorrow();
     } catch (e) {
       setState(() => isLoading = false);
@@ -156,26 +160,9 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // Helper: Only take first part before comma, trim spaces
-  String sanitizeCityInput(String input) {
-    return input.split(',')[0].trim();
-  }
-
   Future<void> _searchCity() async {
     if (_searchController.text.isEmpty) return;
-    final sanitized = sanitizeCityInput(_searchController.text);
-
-    // Optional: If sanitized != original, show info
-    if (sanitized != _searchController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Searching for "$sanitized". For best results, type only the city name.'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-    }
-
-    await fetchForCity(sanitized);
+    await fetchForCity(_searchController.text);
   }
 
   void _toggleFavorite() async {
@@ -192,6 +179,27 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   bool get _isFavorite => _favorites.contains(_city);
+
+  // ---- STEP 6: UPDATE HOMESCREEN WIDGET ----
+  Future<void> _updateHomeWidget() async {
+    if (weather == null) return;
+    final tempUnit = widget.useFahrenheit ? "°F" : "°C";
+    final double tempVal = weather!.current.temperature;
+    final String tempString = widget.useFahrenheit
+        ? '${(tempVal * 9 / 5 + 32).toStringAsFixed(1)}$tempUnit'
+        : '${tempVal.toStringAsFixed(1)}$tempUnit';
+
+    await HomeWidget.saveWidgetData<String>('weather_temp', tempString);
+    await HomeWidget.saveWidgetData<String>('weather_desc', _weatherDescription(weather!.current.weathercode));
+    await HomeWidget.saveWidgetData<String>('weather_city', _city);
+
+    // You must match this class name to your Android native widget provider class!
+    await HomeWidget.updateWidget(
+      name: 'HomeWidgetProvider',
+      androidName: 'HomeWidgetProvider',
+    );
+  }
+  // ---- END STEP 6 ----
 
   @override
   Widget build(BuildContext context) {
@@ -285,7 +293,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // --- Main weather card ---
+                      // Main weather card
                       Center(
                         child: InkWell(
                           borderRadius: BorderRadius.circular(36),
@@ -331,7 +339,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                   const SizedBox(height: 16),
                                   Text(
-                                    '${weather!.current.temperature.toStringAsFixed(1)}$tempUnit',
+                                    '${widget.useFahrenheit
+                                        ? (weather!.current.temperature * 9 / 5 + 32).toStringAsFixed(1)
+                                        : weather!.current.temperature.toStringAsFixed(1)}$tempUnit',
                                     style: TextStyle(
                                       fontSize: 44,
                                       fontWeight: FontWeight.bold,
