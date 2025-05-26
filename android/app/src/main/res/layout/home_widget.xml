@@ -12,7 +12,7 @@
         android:id="@+id/weather_icon"
         android:layout_width="48dp"
         android:layout_height="48dp"
-        android:src="@drawable/ic_sunny" <!-- Put a weather icon here -->
+        android:src="@drawable/ic_sunny" 
         android:contentDescription="@string/weather_icon" />
 
     <TextView
