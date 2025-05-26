@@ -2,7 +2,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/weather_model.dart';
 import '../config.dart';
-import 'package:home_widget/home_widget.dart';
+import 'package:home_widget/home_widget.dart';         // For widget update
+import '../utils/widget_helper.dart';                  // Import helper
 
 // Weather alert model
 class WeatherAlert {
@@ -29,7 +30,6 @@ class WeatherService {
     double longitude = defaultLongitude,
     bool useFahrenheit = false, // <--- Added for unit toggle
   }) async {
-    // Select units based on toggle
     final tempUnit = useFahrenheit ? "fahrenheit" : "celsius";
 
     final url = Uri.parse(
@@ -45,7 +45,6 @@ class WeatherService {
     );
     final response = await http.get(url);
 
-    // Debug: Print URL and response for troubleshooting
     print('API URL: $url');
     print('API RESPONSE: ${response.body}');
 
@@ -125,6 +124,14 @@ class WeatherService {
         }
       }
 
+      // ---- Update Widget Here ----
+      await updateWeatherWidget(
+        iconType: getIconTypeFromWeatherCode(current.weathercode),
+        temp: "${current.temperature.round()}°${useFahrenheit ? 'F' : 'C'}",
+        desc: getWeatherDescription(current.weathercode),
+        city: "Delhi",
+      );
+
       return WeatherResponseWithAlerts(
         current: current,
         hourly: hourly,
@@ -136,4 +143,17 @@ class WeatherService {
       return null;
     }
   }
+}
+
+/// Helper: Map weather codes to icon types used in the widget.
+/// Put this in widget_helper.dart if you want reusability!
+String getIconTypeFromWeatherCode(int code) {
+  if (code == 0) return 'sunny';
+  if ([1, 2].contains(code)) return 'partly_cloudy';
+  if (code == 3) return 'cloudy';
+  if ([45, 48].contains(code)) return 'mist';
+  if ([51, 53, 55, 61, 63, 65, 80, 81, 82].contains(code)) return 'rain';
+  if ([71, 73, 75, 85, 86].contains(code)) return 'snow';
+  if ([95, 96, 99].contains(code)) return 'thunder';
+  return 'sunny'; // fallback
 }
