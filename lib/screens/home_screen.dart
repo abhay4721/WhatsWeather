@@ -60,10 +60,6 @@ class _HomeScreenState extends State<HomeScreen> {
       _searchController.text = _city;
       fetchForCity(_city);
     }
-    // Update if unit changes
-    if (widget.useFahrenheit != oldWidget.useFahrenheit) {
-      fetchForCity(_city);
-    }
   }
 
   Future<void> _autoFetchLocationWeather() async {
@@ -94,7 +90,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _checkAndNotifyForTomorrow() async {
     if (weather == null) return;
-    if (weather!.daily.length < 2) return; // Index 1 = tomorrow
+    if (weather!.daily.length < 2) return;
     final tomorrow = weather!.daily[1];
     final rainCodes = [61, 63, 65, 80, 81, 82];
     final thunderCodes = [95, 96, 99];
@@ -134,7 +130,7 @@ class _HomeScreenState extends State<HomeScreen> {
         isLoading = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('City not found')),
+        const SnackBar(content: Text('City not found. Try typing only the city name, e.g., "Kochi".')),
       );
     }
   }
@@ -160,13 +156,30 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // Helper: Only take first part before comma, trim spaces
+  String sanitizeCityInput(String input) {
+    return input.split(',')[0].trim();
+  }
+
   Future<void> _searchCity() async {
     if (_searchController.text.isEmpty) return;
-    await fetchForCity(_searchController.text);
+    final sanitized = sanitizeCityInput(_searchController.text);
+
+    // Optional: If sanitized != original, show info
+    if (sanitized != _searchController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Searching for "$sanitized". For best results, type only the city name.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+
+    await fetchForCity(sanitized);
   }
 
   void _toggleFavorite() async {
-    if (_city == "My Location") return; // Don't favorite GPS
+    if (_city == "My Location") return;
     setState(() {
       if (_favorites.contains(_city)) {
         _favorites.remove(_city);
@@ -272,7 +285,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // --- Main weather card: Now tappable! ---
+                      // --- Main weather card ---
                       Center(
                         child: InkWell(
                           borderRadius: BorderRadius.circular(36),
