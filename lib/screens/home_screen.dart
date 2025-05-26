@@ -160,9 +160,27 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+   // Helper: Only take first part before comma, trim spaces
+  String sanitizeCityInput(String input) {
+    return input.split(',')[0].trim();
+  }
+
   Future<void> _searchCity() async {
     if (_searchController.text.isEmpty) return;
-    await fetchForCity(_searchController.text);
+    // await fetchForCity(_searchController.text);
+     final sanitized = sanitizeCityInput(_searchController.text);
+
+    // Optional: If sanitized != original, show info
+    if (sanitized != _searchController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Searching for "$sanitized". For best results, type only the city name.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+
+    await fetchForCity(sanitized);
   }
 
   void _toggleFavorite() async {
