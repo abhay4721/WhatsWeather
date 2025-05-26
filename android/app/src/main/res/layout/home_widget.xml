@@ -19,7 +19,7 @@
         android:id="@+id/weather_temp"
         android:text="20°C"
         android:textStyle="bold"
-        android:textColor="#222222"
+        android:textColor="#ffffff"
         android:textSize="28sp"
         android:layout_marginTop="4dp"
         android:layout_width="wrap_content"
@@ -29,7 +29,7 @@
         android:id="@+id/weather_desc"
         android:text="Clear Sky"
         android:textSize="16sp"
-        android:textColor="#666666"
+        android:textColor="#bcbfbf"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
 
