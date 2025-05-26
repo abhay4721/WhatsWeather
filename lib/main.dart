@@ -5,6 +5,7 @@ import 'screens/home_screen.dart';
 import 'screens/favorites_screen.dart';
 import 'screens/settings_screen.dart';
 import 'services/notification_service.dart';
+import 'package:home_widget/home_widget.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
