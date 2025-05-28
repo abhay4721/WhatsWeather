@@ -1,28 +1,30 @@
-String lottieForWeather(int code, {int? hour}) {
+import 'package:flutter/material.dart';
+
+// Helper function to map weather codes to Lottie type strings
+String _weatherTypeFromCode(int code) {
+  if (code == 0) return 'sunny';
+  if (code == 1) return 'cloudy';
+  if (code == 2) return 'cloudy';
+  if (code == 3) return 'cloudy';
+  if ([45, 48].contains(code)) return 'fog';
+  if ([51, 53, 55, 61, 63, 65, 80, 81, 82].contains(code)) return 'rain';
+  if ([71, 73, 75, 77, 85, 86].contains(code)) return 'snow';
+  if ([95, 96, 99].contains(code)) return 'thunder';
+  return 'sunny'; // fallback
+}
+
+///
+/// Returns the correct Lottie animation file path based on weather code and theme mode.
+///
+String lottieForWeather(int weatherCode, {required BuildContext context, int? hour}) {
   final isNight = hour != null && (hour < 6 || hour >= 19);
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  final mode = isDark ? 'dark' : 'light';
+  String type = _weatherTypeFromCode(weatherCode);
 
-  // Clear sky
-  if (code == 0) {
-    if (isNight) return "assets/lottie/night.json";
-    return "assets/lottie/sunny.json";
-  }
+  // Optionally, you can override for night-time (if you use separate night Lotties)
+  // if (isNight && type == 'sunny') type = 'night'; // Example if you have night.json
 
-  // Cloudy & Partly Cloudy
-  if (code == 1 || code == 2 || code == 3) return "assets/lottie/cloudy.json";
-
-  // Fog
-  if (code == 45 || code == 48) return "assets/lottie/fog.json";
-
-  // Rain
-  if ([51, 53, 55, 61, 63, 65, 80, 81, 82].contains(code)) return "assets/lottie/rain.json";
-
-  // Snow
-  if ([71, 73, 75, 77, 85, 86].contains(code)) return "assets/lottie/snow.json";
-
-  // Thunderstorm
-  if ([95, 96, 99].contains(code)) return "assets/lottie/thunder.json";
-
-  // Default fallback
-  if (isNight) return "assets/lottie/night.json";
-  return "assets/lottie/cloudy.json";
+  // Result: assets/animation/ic_sunny_dark.json etc
+  return 'assets/lottie/${type}_$mode.json';
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/weather_model.dart';
 import '../utils/weather_icon.dart';
+import '../widgets/weather_lottie.dart';
+
 
 class WeatherCard extends StatelessWidget {
   final CurrentWeather current;

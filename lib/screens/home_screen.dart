@@ -13,6 +13,9 @@ import '../widgets/weather_search_bar.dart';
 import '../utils/lottie_weather.dart';
 import 'daily_details_page.dart';
 import '../services/notification_service.dart';
+import '../widgets/weather_lottie.dart';
+
+
 
 class HomeScreen extends StatefulWidget {
   final bool darkMode;
@@ -349,7 +352,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Lottie.asset(
-                                    lottieForWeather(weather!.current.weathercode, hour: DateTime.now().hour),
+                                    lottieForWeather(
+                                      weather!.current.weathercode,
+                                       hour: DateTime.now().hour,
+                                        context: context,
+                                      ),
                                     width: 96,
                                     height: 96,
                                     repeat: true,
