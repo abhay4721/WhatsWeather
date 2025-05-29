@@ -13,18 +13,20 @@ String _weatherTypeFromCode(int code) {
   return 'sunny'; // fallback
 }
 
-///
-/// Returns the correct Lottie animation file path based on weather code and theme mode.
-///
-String lottieForWeather(int weatherCode, {required BuildContext context, int? hour}) {
+String lottieForWeather(
+  int weatherCode, {
+  required BuildContext context,
+  int? hour,
+}) {
   final isNight = hour != null && (hour < 6 || hour >= 19);
   final isDark = Theme.of(context).brightness == Brightness.dark;
   final mode = isDark ? 'dark' : 'light';
   String type = _weatherTypeFromCode(weatherCode);
 
-  // Optionally, you can override for night-time (if you use separate night Lotties)
-  // if (isNight && type == 'sunny') type = 'night'; // Example if you have night.json
+  //for night clear sky
+  if (weatherCode == 0 && isNight) {
+    return 'assets/lottie/night_$mode.json';
+  }
 
-  // Result: assets/animation/ic_sunny_dark.json etc
   return 'assets/lottie/${type}_$mode.json';
 }
