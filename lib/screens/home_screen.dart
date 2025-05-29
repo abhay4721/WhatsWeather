@@ -14,6 +14,7 @@ import '../utils/lottie_weather.dart';
 import 'daily_details_page.dart';
 import '../services/notification_service.dart';
 import '../widgets/weather_lottie.dart';
+import '../screens/lottie_test_page.dart';
 
 
 
@@ -229,24 +230,33 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: scheme.primaryContainer,
-        elevation: 0,
-        title: Text(
-          'WhatsWeather - $_city',
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
-            color: scheme.onPrimaryContainer,
-            fontSize: 20,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.settings, color: scheme.onPrimaryContainer),
-            tooltip: 'Settings',
-            onPressed: widget.onSettingsPressed,
-          ),
-        ],
-      ),
+  backgroundColor: scheme.primaryContainer,
+  elevation: 0,
+  title: Text(
+    'WhatsWeather - $_city',
+    // ...
+  ),
+  actions: [
+    IconButton(
+      icon: Icon(Icons.settings, color: scheme.onPrimaryContainer),
+      tooltip: 'Settings',
+      onPressed: widget.onSettingsPressed,
+    ),
+    IconButton(
+      icon: Icon(Icons.bug_report, color: scheme.onPrimaryContainer),
+      tooltip: 'Test Lottie',
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => LottieTestPage()),
+        );
+      },
+    ),
+  ],
+),
+
+
+
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
