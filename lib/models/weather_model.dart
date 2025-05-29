@@ -3,7 +3,11 @@ class WeatherResponse {
   final List<HourlyWeather> hourly;
   final List<DailyWeather> daily;
 
-  WeatherResponse({required this.current, required this.hourly, required this.daily});
+  WeatherResponse({
+    required this.current,
+    required this.hourly,
+    required this.daily,
+  });
 
   factory WeatherResponse.fromJson(Map<String, dynamic> json) {
     // Parse daily data
@@ -19,19 +23,24 @@ class WeatherResponse {
     final List? sunsets = dailyJson['sunset'];
 
     for (int i = 0; i < times.length; i++) {
-      dailyList.add(DailyWeather(
-        date: times[i],
-        maxTemp: (maxTemps[i] as num).toDouble(),
-        minTemp: (minTemps[i] as num).toDouble(),
-        weathercode: weathercodes[i],
-        humidity: humidities != null ? (humidities[i] as num?)?.toDouble() : null,
-        pressure: pressures != null ? (pressures[i] as num?)?.toDouble() : null,
-        sunrise: sunrises != null ? sunrises[i] : null,
-        sunset: sunsets != null ? sunsets[i] : null,
-      ));
+      dailyList.add(
+        DailyWeather(
+          date: times[i],
+          maxTemp: (maxTemps[i] as num).toDouble(),
+          minTemp: (minTemps[i] as num).toDouble(),
+          weathercode: weathercodes[i],
+          humidity: humidities != null
+              ? (humidities[i] as num?)?.toDouble()
+              : null,
+          pressure: pressures != null
+              ? (pressures[i] as num?)?.toDouble()
+              : null,
+          sunrise: sunrises != null ? sunrises[i] : null,
+          sunset: sunsets != null ? sunsets[i] : null,
+        ),
+      );
     }
 
-    // Dummy parsing for current and hourly, update as per your logic
     return WeatherResponse(
       current: CurrentWeather.fromJson(json['current']),
       hourly: [], // Fill if you need hourly details
@@ -44,14 +53,21 @@ class CurrentWeather {
   final double temperature;
   final double windspeed;
   final int weathercode;
+  final String time;
 
-  CurrentWeather({required this.temperature, required this.windspeed, required this.weathercode});
+  CurrentWeather({
+    required this.temperature,
+    required this.windspeed,
+    required this.weathercode,
+    required this.time,
+  });
 
   factory CurrentWeather.fromJson(Map<String, dynamic> json) {
     return CurrentWeather(
       temperature: (json['temperature'] as num).toDouble(),
       windspeed: (json['windspeed'] as num).toDouble(),
       weathercode: json['weathercode'],
+      time: json['time'],
     );
   }
 }

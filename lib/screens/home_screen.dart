@@ -354,7 +354,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                   Lottie.asset(
                                     lottieForWeather(
                                       weather!.current.weathercode,
-                                       hour: DateTime.now().hour,
+                                       //hour: DateTime.now().hour,
+                                       hour: DateTime.parse(weather!.current.time).hour,
                                         context: context,
                                       ),
                                     width: 96,
